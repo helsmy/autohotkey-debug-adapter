@@ -1,0 +1,112 @@
+{
+	"name": "autohotkey-debug",
+	"displayName": "AutoHotKey Debug",
+	"description": "Debug Adaptor for AutoHotKey.",
+	"version": "0.0.2",
+	"publisher": "helsmy",
+	"author": {
+		"name": "Helsmy"
+	},
+	"keywords": [
+		"ahk","AutoHotKey","autohotkey",
+		"debug","debugger"
+	],
+	"engines": {
+		"vscode": "^1.39.0"
+	},
+	"icon": "images/debug-icon.png",
+	"categories": [
+		"Debuggers"
+	],
+	"private": true,
+	"activationEvents": [
+		"onDebug"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"breakpoints": [
+			{
+				"language": "ahk"
+			},
+			{
+				"language": "autohotkey"
+			}
+		],
+		"debuggers": [
+			{
+				"type": "ahkdbg",
+				"label": "AutoHotKey Debug",
+				"program": "./ahkdbg/debugAdapter.ahk",
+				"runtime": "C:/Program Files/AutoHotkey/AutoHotkey.exe",
+				"languages": ["ahk", "autohotkey"],
+				"configurationAttributes": {
+					"launch": {
+						"required": [
+							"program"
+						],
+						"properties": {
+							"program": {
+								"type": "string",
+								"description": "Absolute path to a text file.",
+								"default": "${workspaceRoot}/${fileBasename}"
+							},
+							"stopOnEntry": {
+								"type": "boolean",
+								"description": "Automatically stop after launch.",
+								"default": true
+							},
+							"captureStreams" : {
+								"type": "boolean",
+								"description": "Whether to receive standard io stream.",
+								"default": false
+							}
+						}
+					}
+				},
+				"initialConfigurations": [
+					{
+						"type": "ahkdbg",
+						"request": "launch",
+						"name": "Ask for file name",
+						"program": "${workspaceRoot}/${fileBasename}",
+						"stopOnEntry": true,
+						"captureStreams" : false
+					}
+				],
+				"configurationSnippets": [
+					{
+						"label": "AutoHotKey Debug: Launch",
+						"description": "A new configuration for 'debugging' AutoHotKey.",
+						"body": {
+							"type": "ahkdbg",
+							"request": "launch",
+							"name": "Ask for file name",
+							"program": "^\"\\${workspaceRoot}/\\${fileBasename}\"",
+							"stopOnEntry": true,
+							"captureStreams" : false
+						}
+					}
+				]
+			}
+		]
+	},
+	"scripts": {
+		"vscode:prepublish": "yarn run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "yarn run compile",
+		"test": "node ./out/test/runTest.js",
+		"package": "vsce package"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.1",
+		"@types/mocha": "^5.2.7",
+		"@types/node": "^12.11.7",
+		"@types/vscode": "^1.39.0",
+		"glob": "^7.1.5",
+		"mocha": "^6.2.2",
+		"typescript": "^3.6.4",
+		"tslint": "^5.20.0",
+		"vscode-test": "^1.2.2"
+	}
+}
