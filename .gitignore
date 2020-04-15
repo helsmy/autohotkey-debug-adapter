@@ -1,0 +1,11 @@
+# bak
+*.bak
+
+node_modules/
+out/
+npm-debug.log
+vsc-extension-quickstart.md
+*.vsix
+.DS_Store
+yarn-error.log
+src/test

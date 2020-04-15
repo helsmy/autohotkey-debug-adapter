@@ -1,0 +1,21 @@
+#SingleInstance Force
+#NoEnv
+#NoTrayIcon
+; SetBatchLines 20ms
+ListLines Off
+SetWorkingDir %A_ScriptDir%
+
+#Include %A_ScriptDir%
+#Include ./AHKDebug.ahk
+
+IOStream := new StdIO
+
+SERVER_ADDRESS := [IOStream, IOStream]
+module := new DebugSession()
+app := module.BuildApp()
+
+DAd := MakeServer(SERVER_ADDRESS, app)
+
+; Register send event handler
+EventDispatcher.On("sendEvent", ObjBindMethod(DAd, "HandleEvent"))
+DAd.ServeForever()
