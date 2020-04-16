@@ -256,7 +256,7 @@ class DebugSession extends Application
 
     disconnectRequest(response, env)
     {
-        this.runtime.DBGp_CloseDebugger()
+        this._runtime.DBGp_CloseDebugger()
 		if Util_ProcessExist(this.Dbg_PID)
 			Process, Close, % this.Dbg_PID
 		this.isStart := false
