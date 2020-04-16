@@ -26,9 +26,9 @@ An early version which needs test. Use it at you own risk.
 
 ## Release Notes
 
-### 0.0.2
+### 0.0.3
 
-Initial release
+Fix display bug in object
 
 ## Furture Plan
 

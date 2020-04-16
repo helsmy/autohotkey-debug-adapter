@@ -1,5 +1,6 @@
 #Include <protocolserver>
 #Include <DBGp>
+#Include <event>
 
 class AHKRunTime
 {
@@ -298,7 +299,7 @@ class AHKRunTime
 			Dbg_VarData := DBGp_Base64UTF8Decode(dom.selectSingleNode("/response/property").text)
 			;VE_Create(Dbg_VarName, Dbg_VarData, Dbg_VarIsReadOnly)
 		}else
-			;OE_Create(dom)
+			Dbg_VarData := this.InspectObject(dom)
 
 		return Dbg_VarData
 	}
@@ -311,7 +312,7 @@ class AHKRunTime
 		else if (id == "Local")
 			id := "-c 0"
 		else
-			id := "-n " . id
+			return this.InspectVariable(id)
 		; TODO: may need to send error
 		; if !this.bIsAsync && !this.Dbg_OnBreak
 
@@ -320,46 +321,29 @@ class AHKRunTime
 		name := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@name"))
 		value := Util_UnpackContNodes(ScopeContext.selectNodes("/response/property"))
 		type := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@type"))
-		;~ MsgBox, % fsarr().Print(name) " id: " id
+
 		return {"name": name, "value": value, "type": type}
 	}
 
-	VL_Update()
+	InspectObject(ByRef objdom)
 	{
-		; FIXME: may need delete
-		;~ global
-		;~ if !Dbg_VarWin
-			;~ return
-		; read
-		;ToolTip, Updating variable list...
-		this.Dbg_GetContexts()
-		VL_Local := Util_UnpackNodes(this.Dbg_LocalContext.selectNodes("/response/property/@name"))
-		VL_Global := Util_UnpackNodes(this.Dbg_GlobalContext.selectNodes("/response/property/@name"))
-		VL_NVars := VL_Local.MaxIndex() + VL_Global.MaxIndex()
-		VL_LocalCont := Util_UnpackContNodes(this.Dbg_LocalContext.selectNodes("/response/property"))
-		VL_GlobalCont := Util_UnpackContNodes(this.Dbg_GlobalContext.selectNodes("/response/property"))
-		VL_GlobalType := Util_UnpackNodes(this.Dbg_GlobalContext.selectNodes("/response/property/@type"))
-		; update
-		;~ Gui 4:Default
-		;~ LV_Delete()
-		;~ Loop, % VL_Local.MaxIndex()
-			;~ LV_Add("", "Local", VL_Local[A_Index], VL_LocalCont[A_Index])
-		;~ Loop, % VL_Global.MaxIndex()
-			;~ LV_Add("", "Global", VL_Global[A_Index], VL_GlobalCont[A_Index])
-		;~ ToolTip
-	}
-
-	Dbg_GetContexts()
-	{
-		; FIXME: may need delete
-		if !this.bIsAsync && !this.Dbg_OnBreak
-			return
-		this.Dbg_Session.feature_set("-n max_data -v 65")
-		this.Dbg_Session.context_get("-c 0", Dbg_LocalContext)
-		this.Dbg_Session.context_get("-c 1", Dbg_GlobalContext)
-		this.Dbg_Session.feature_set("-n max_data -v " dbgMaxData)
-		this.Dbg_LocalContext  := loadXML(Dbg_LocalContext)
-		this.Dbg_GlobalContext := loadXML(Dbg_GlobalContext)
+		root := objdom.selectSingleNode("/response/property/@name").text
+		propertyNodes := objdom.selectNodes("/response/property[1]/property")
+		
+		name := [], value := [], type := []
+		
+		Loop % propertyNodes.length
+		{
+			node := propertyNodes.item[A_Index-1]
+			nodeName := node.attributes.getNamedItem("name").text
+			needToLoadChildren := node.attributes.getNamedItem("children").text
+			fullName := node.attributes.getNamedItem("fullname").text
+			nodeType := node.attributes.getNamedItem("type").text
+			nodeValue := DBGp_Base64UTF8Decode(node.text)
+			name.Push(fullName), type.Push(nodeType), value.Push(nodeValue)
+		}
+		; TODO: better display name
+		return {"name": name, "value": value, "type": type}
 	}
 
 	SetEnableChildren(v)

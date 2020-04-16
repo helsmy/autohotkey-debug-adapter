@@ -2,23 +2,30 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adaptor for AutoHotKey.",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
 	},
+	"license": "LGPL-3.0",
 	"keywords": [
 		"ahk","AutoHotKey","autohotkey",
 		"debug","debugger"
 	],
 	"engines": {
-		"vscode": "^1.39.0"
+		"vscode": "^1.44.0"
 	},
-	"icon": "images/debug-icon.png",
 	"categories": [
 		"Debuggers"
 	],
 	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/helsmy/autohotkey-debug-adaptor.git"
+	},
+	"bugs": {
+		"url": "https://github.com/helsmy/autohotkey-debug-adaptor/issues"
+	},
 	"activationEvents": [
 		"onDebug"
 	],
@@ -102,7 +109,7 @@
 		"@types/glob": "^7.1.1",
 		"@types/mocha": "^5.2.7",
 		"@types/node": "^12.11.7",
-		"@types/vscode": "^1.39.0",
+		"@types/vscode": "^1.44.0",
 		"glob": "^7.1.5",
 		"mocha": "^6.2.2",
 		"typescript": "^3.6.4",
