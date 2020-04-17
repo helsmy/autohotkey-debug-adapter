@@ -1,6 +1,6 @@
 # AutoHotKey Debug
 
-Simple debug adaptor for AutoHotKey.
+Simple debug adaptor for AutoHotKey implemented by AutoHotKey.
 
 ## Features
 
@@ -13,16 +13,17 @@ Simple debug adaptor for AutoHotKey.
 2. Switch to the debug viewlet.
 3. Press the green 'play' button to start debugging.
 
-![Debug](images/debugging.png)
+![Debug](images/debugging.gif)
 
 ## Supported Settings of Launch.json
 
 * `stopOnEntry`: stop on entry or not.
-* `captureStreams`: capture io streams or not (working in progress).
+* `captureStreams`: capture io streams or not.
 
 ## Known Issues
 
 An early version which needs test. Use it at you own risk.
+1. Breakpoint may can't set or cancel (solution: try set and cancel several times)
 
 ## Release Notes
 
@@ -30,8 +31,12 @@ An early version which needs test. Use it at you own risk.
 
 Fix display bug in object
 
+### 0.0.5
+
+Support redirecting standard io streams to debug console. 
+
 ## Furture Plan
 
 * [ ] Support Evaluate For Hovers
-* [ ] Support debug console
+* [x] Support debug console
 * [ ] Change value of varible in debugging

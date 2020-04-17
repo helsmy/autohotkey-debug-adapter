@@ -11,7 +11,6 @@ class AHKRunTime
 		this.bIsAttach := false
 		this.dbgCaptureStreams := false ; unsupport this for now
 		this.AhkExecutable := A_AhkPath
-		this.dbgCaptureStreams := false
 		this.Dbg_Session := ""
 		this.Dbg_BkList := {}
 		this.dbgMaxChildren := 10+0
@@ -19,15 +18,14 @@ class AHKRunTime
 		this.isStart := false
 	}
 
-	Init()
+	Init(clientArgs)
 	{
-		Global
 		; Set the DBGp event handlers
 		DBGp_OnBegin(ObjBindMethod(this, "OnDebuggerConnection"))
 		DBGp_OnBreak(ObjBindMethod(this, "OnDebuggerBreak"))
 		DBGp_OnStream(ObjBindMethod(this, "OnDebuggerStream"))
 		DBGp_OnEnd(ObjBindMethod(this, "OnDebuggerDisconnection"))
-		this.dbgCaptureStreams := this.clientArgs.captureStreams
+		this.clientArgs := clientArgs
 		; DebuggerInit
 	}
 
@@ -94,13 +92,12 @@ class AHKRunTime
 		this.Dbg_OnBreak := false
 		this.Dbg_HasStarted := true
 		this.Dbg_Session.run()
-		this.ST_Clear()
 	}
 
 	StartRun(stopOnEntry := false)
 	{
 		this.VerifyBreakpoints()
-		if !stopOnEntry
+		if stopOnEntry
 		{
 			this.StepIn()
 			this.SendEvent(CreateStoppedEvent("entry", 1))
@@ -207,8 +204,8 @@ class AHKRunTime
 		dom := loadXML(stream)
 		type := dom.selectSingleNode("/stream/@type").text
 		data := DBGp_Base64UTF8Decode(dom.selectSingleNode("/stream").text)
-		; Output Window create
-		; SP_Output(type, data)
+		; Send output event
+		this.SendEvent(CreateOutputEvent(type, data))
 	}
 
 	; OnDebuggerDisconnection() - fired when the debugger disconnects.

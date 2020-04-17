@@ -138,7 +138,7 @@ class RequestHandler
 		responseStr := StrReplace(responseStr, """true""" , "true")
 		responseStr := StrReplace(responseStr, """false""" , "false")
 		responseStr := "Content-Length: " . StrLen(responseStr) . "`r`n`r`n" . responseStr
-		; if response.command == "stackTrace"
+		; if response.event == "output"
 		; 	MsgBox, % "event: `n" responseStr
 		; else
 			; MsgBox % "Response Command: " response.command " seq: " this.seq "`n`n" responseStr

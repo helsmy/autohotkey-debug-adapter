@@ -2,7 +2,7 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adaptor for AutoHotKey.",
-	"version": "0.0.3",
+	"version": "0.0.5",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
@@ -65,7 +65,7 @@
 							"captureStreams" : {
 								"type": "boolean",
 								"description": "Whether to receive standard io stream.",
-								"default": false
+								"default": true
 							}
 						}
 					}
@@ -77,7 +77,7 @@
 						"name": "Ask for file name",
 						"program": "${workspaceRoot}/${fileBasename}",
 						"stopOnEntry": true,
-						"captureStreams" : false
+						"captureStreams" : true
 					}
 				],
 				"configurationSnippets": [
@@ -90,7 +90,7 @@
 							"name": "Ask for file name",
 							"program": "^\"\\${workspaceRoot}/\\${fileBasename}\"",
 							"stopOnEntry": true,
-							"captureStreams" : false
+							"captureStreams" : true
 						}
 					}
 				]
