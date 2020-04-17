@@ -1,14 +1,12 @@
 
 CreateStoppedEvent(reason, threadId)
-{
-	stoppedEvent := {"type": "event", "event": "stopped", "body": {"reason": reason, "threadId": threadId}}
-	return stoppedEvent
+{ 
+	return {"type": "event", "event": "stopped", "body": {"reason": reason, "threadId": threadId}}
 }
 
 CreateBreakpointEvent(reason, breakpoint)
 {
-	breakpointEvent := {"type": "event", "event": "breakpoint", "body": {"reason": reason, "breakpoint": breakpoint}}
-	return breakpointEvent
+	return {"type": "event", "event": "breakpoint", "body": {"reason": reason, "breakpoint": breakpoint}}
 }
 
 CreateTerminatedEvent(restart := "")
@@ -18,6 +16,11 @@ CreateTerminatedEvent(restart := "")
 	if restart == "true"
 		event["body"] := {"restart": restart}
 	return event
+}
+
+CreateOutputEvent(category, output)
+{
+	return {"type": "event", "event": "output", "body": {"category": category, "output": output}}
 }
 
 CreateBreakpoint(verified, id := "", line := "", column := "", source := "")

@@ -37,8 +37,7 @@ class DebugSession extends Application
         response.body["supportsClipboardContext"] := "true"
 
         InitializedEvent := {"type": "event", "event": "initialized"}
-		this._runtime["clientArgs"] := env.arguments
-		this._runtime.Init()
+		this._runtime.Init(env.arguments)
         return [response, InitializedEvent]
     }
 
@@ -57,6 +56,7 @@ class DebugSession extends Application
 		; start ahk debug here
 		if !this.isStart
 		{
+            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
 			this._runtime.Start(env.arguments.program)
 			this.isStart := true
 		}
@@ -84,7 +84,7 @@ class DebugSession extends Application
         }
 
         response["command"] := "launch"
-        stopOnEntry := (env.stopOnEntry == "true") ? true : false
+        stopOnEntry := (env.arguments.stopOnEntry == "true") ? true : false
         this._runtime.StartRun(stopOnEntry)
         ; Send a 'Stop on Entry' Stopped event, to make vs code stop on entry
         ; stoppedEvent := CreateStoppedEvent("entry", DebugSession.THREAD_ID)

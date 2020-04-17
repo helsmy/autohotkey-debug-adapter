@@ -46,7 +46,7 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.request = 'launch';
 				config.program = '${file}';
 				config.stopOnEntry = true;
-				config.captureStreams = false;
+				config.captureStreams = true;
 			}
 		}
 
