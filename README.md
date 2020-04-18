@@ -23,7 +23,8 @@ Simple debug adaptor for AutoHotKey implemented by AutoHotKey.
 ## Known Issues
 
 An early version which needs test. Use it at you own risk.
-1. Breakpoint may can't set or cancel (solution: try set and cancel several times)
+1. Unsupport for non-ascii characters.
+2. ~~Breakpoint may can't set or cancel~~ (solution: fixed)
 
 ## Release Notes
 
@@ -33,7 +34,12 @@ Fix display bug in object
 
 ### 0.0.5
 
-Support redirecting standard io streams to debug console. 
+Support redirecting standard io streams to debug console.
+
+### 0.1.0
+
+1. Fix bugs abort breakpoints.
+2. Support viewing variables in different stacks.
 
 ## Furture Plan
 

@@ -7,7 +7,7 @@ class AHKRunTime
 	__New()
 	{
 		this.dbgAddr := "127.0.0.1"
-		this.dbgPort := 9001 ;temp mock debug port
+		this.dbgPort := 9005 ;temp mock debug port
 		this.bIsAttach := false
 		this.dbgCaptureStreams := false ; unsupport this for now
 		this.AhkExecutable := A_AhkPath
@@ -226,10 +226,11 @@ class AHKRunTime
 	{
 		uri := DBGp_EncodeFileURI(this.path)
 		for line, bk in this.Dbg_BkList[uri]
-		{
 			this.Dbg_Session.breakpoint_remove("-d " bk.id)
-			this.RemoveBk(uri, line)
-		}
+		; MsgBox, % line " " fsarr().Print(bk)
+		this.Dbg_BkList[uri] := {}
+		; this.Dbg_Session.breakpoint_list(, Dbg_Response)
+		; MsgBox, % Dbg_Response " " fsarr().Print(this.Dbg_BkList)
 	}
 
 	; @line: 1 based lineno
@@ -237,35 +238,34 @@ class AHKRunTime
 	{
 		uri := DBGp_EncodeFileURI(this.path)
 		bk := this.GetBk(uri, line)
-		if bk
-		{
-			;MsgBox, Has bk
-			this.Dbg_Session.breakpoint_remove("-d " bk.id)
+		; if bk
+		; {
+			; this.Dbg_Session.breakpoint_remove("-d " bk.id)
 			; response vs code here
 			; SciTE_BPSymbolRemove(line)
-			this.RemoveBk(uri, line)
-			return {"verified": "false", "line": line, "id": ""}
-		}else
+			; this.RemoveBk(uri, line)
+		; 	return {"verified": "true", "line": line, "id": bk.id}
+		; }else
+		; {
+		this.bInBkProcess := true
+		this.Dbg_Session.breakpoint_set("-t line -n " line " -f " uri, Dbg_Response)
+		If InStr(Dbg_Response, "<error") ; Check if AutoHotkey actually inserted the breakpoint.
 		{
-			this.bInBkProcess := true
-			this.Dbg_Session.breakpoint_set("-t line -n " line " -f " uri, Dbg_Response)
-			If InStr(Dbg_Response, "<error") ; Check if AutoHotkey actually inserted the breakpoint.
-			{
-				;MsgBox, Set error
-				this.bInBkProcess := false
-				; TODO: return reason to frontend
-				return {"verified": "false", "line": line, "id": ""}
-			}
-			;MsgBox, Set success
-			dom := loadXML(Dbg_Response)
-			bkID := dom.selectSingleNode("/response/@id").text
-			this.Dbg_Session.breakpoint_get("-d " bkID, Dbg_Response)
-			dom := loadXML(Dbg_Response)
-			line := dom.selectSingleNode("/response/breakpoint[@id=" bkID "]/@lineno").text
-			this.AddBk(uri, line, bkID)
+			; MsgBox, Set error
 			this.bInBkProcess := false
-			return {"verified": "true", "line": line, "id": bkID}
+			; TODO: return reason to frontend
+			return {"verified": "false", "line": line, "id": ""}
 		}
+		;MsgBox, Set success
+		dom := loadXML(Dbg_Response)
+		bkID := dom.selectSingleNode("/response/@id").text
+		this.Dbg_Session.breakpoint_get("-d " bkID, Dbg_Response)
+		dom := loadXML(Dbg_Response)
+		line := dom.selectSingleNode("/response/breakpoint[@id=" bkID "]/@lineno").text
+		this.AddBk(uri, line, bkID)
+		this.bInBkProcess := false
+		return {"verified": "true", "line": line, "id": bkID}
+		; }
 	}
 
 	VerifyBreakpoints()
@@ -275,12 +275,14 @@ class AHKRunTime
 			this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("true", bk.id, line)))
 	}
 
-	InspectVariable(Dbg_VarName)
+	InspectVariable(Dbg_VarName, frameId)
 	{
-		; TODO: Fit to DAP
 		; Allow retrieving immediate children for object values
 		this.SetEnableChildren(true)
-		this.Dbg_Session.property_get("-n " Dbg_VarName, Dbg_Response)
+		if (frameId != "None")
+			this.Dbg_Session.property_get("-n " . Dbg_VarName . " -d " . frameId, Dbg_Response)
+		else
+			this.Dbg_Session.property_get("-n " Dbg_VarName, Dbg_Response)
 		this.SetEnableChildren(false)
 		dom := loadXML(Dbg_Response)
 
@@ -301,15 +303,14 @@ class AHKRunTime
 		return Dbg_VarData
 	}
 
-	CheckVariables(id)
+	CheckVariables(id, frameId)
 	{
-		; TODO: finish Object Inspection
 		if (id == "Global")
 			id := "-c 1"
 		else if (id == "Local")
-			id := "-c 0"
+			id := "-d " . frameId . " -c 0"
 		else
-			return this.InspectVariable(id)
+			return this.InspectVariable(id, frameId)
 		; TODO: may need to send error
 		; if !this.bIsAsync && !this.Dbg_OnBreak
 
@@ -360,15 +361,14 @@ class AHKRunTime
 
 	GetStack()
 	{
-		;~ if !Dbg_StackTraceWin
-			;~ return
 		aStackWhere := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@where"))
 		aStackFile  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@filename"))
 		aStackLine  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@lineno"))
+		aStackLevel  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@level"))
 		Loop, % aStackFile.Length()
 			aStackFile[A_Index] := DBGp_DecodeFileURI(aStackFile[A_Index])
 
-		return {"file": aStackFile, "line": aStackLine, "where": aStackWhere}
+		return {"file": aStackFile, "line": aStackLine, "where": aStackWhere, "level": aStackLevel}
 	}
 
 	AddBk(uri, line, id, cond := "")
@@ -423,17 +423,8 @@ Util_UnpackContNodes(nodes)
 	o := []
 	Loop, % nodes.length
 		node := nodes.item[A_Index-1]
-		,o.Insert(node.attributes.getNamedItem("type").text != "object" ? VL_ShortCont(DBGp_Base64UTF8Decode(node.text)) : "(Object)")
+		,o.Insert(node.attributes.getNamedItem("type").text != "object" ? DBGp_Base64UTF8Decode(node.text) : "(Object)")
 	return o
-}
-
-VL_ShortCont(a)
-{
-	if pos := InStr(a, "`n")
-		a := Trim(SubStr(a, 1, pos-1), "`r") "..."
-	if StrLen(a) = 65
-		a .= "..."
-	return a
 }
 
 ST_ShortName(a)

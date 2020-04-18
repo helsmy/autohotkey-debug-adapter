@@ -9,13 +9,13 @@ SetWorkingDir %A_ScriptDir%
 #Include ./AHKDebug.ahk
 
 IOStream := new StdIO
+isdebug := false
 
 SERVER_ADDRESS := [IOStream, IOStream]
 module := new DebugSession()
 app := module.BuildApp()
 
 DAd := MakeServer(SERVER_ADDRESS, app)
-
 ; Register send event handler
 EventDispatcher.On("sendEvent", ObjBindMethod(DAd, "HandleEvent"))
 DAd.ServeForever()
