@@ -1,6 +1,7 @@
 #Include <jsonlib>
 #Include <fsarr>
 #Include <stdio>
+#Include <logger>
 
 class ProtocolServer
 {
@@ -45,7 +46,7 @@ class ProtocolServer
         env := this.RH.ParseRequest(request_data)
 		env.server := this
 		; if env.command != "waitConfiguration"
-		; 	MsgBox, %request_data%
+		; 	logger("VSC -> DA Request: " request_data)
         result := this.application(env)
 
         ; Construct a response and send it back to the client
@@ -137,11 +138,14 @@ class RequestHandler
 		responseStr := fsarr().print(response)
 		responseStr := StrReplace(responseStr, """true""" , "true")
 		responseStr := StrReplace(responseStr, """false""" , "false")
-		responseStr := "Content-Length: " . StrLen(responseStr) . "`r`n`r`n" . responseStr
-		; if response.event == "output"
-		; 	MsgBox, % "event: `n" responseStr
+		responseStr := StrReplace(responseStr, "`n" , "\n")
+		responseStr := StrReplace(responseStr, "`t" , "\t")
+		responseStr := StrReplace(responseStr, "`r" , "\r")
+		; if response.type == "event"
+		; 	logger("DA -> VSC event: " responseStr)
 		; else
-			; MsgBox % "Response Command: " response.command " seq: " this.seq "`n`n" responseStr
+		; 	logger("DA -> VSC Response: " responseStr)
+		responseStr := "Content-Length: " . StrLen(responseStr) . "`r`n`r`n" . responseStr
 
 		this.outStream.Write(responseStr)
 		this.seq++

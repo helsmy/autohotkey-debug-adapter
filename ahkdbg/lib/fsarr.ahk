@@ -93,7 +93,11 @@ class __ClASS_AHKFS_ARRAY
 					if IsObject(v)
 						ret .= this.print(v) . ", "
 					else if fstype(v) == "String"
+					{
+						v := StrReplace(v, "\" , "\\")
+						v := StrReplace(v, """", "\""")
 						ret .= """" . v . """" . ", "
+					}
 					else
 						ret .= v . ", "
 				}
@@ -106,7 +110,13 @@ class __ClASS_AHKFS_ARRAY
 					if IsObject(v)
 						ret .= """" . k . """" . ": " . this.print(v) . ", "
 					else if fstype(v) == "String"
+					{
+						v := StrReplace(v, "\" , "\\")
+						; k := StrReplace(k, "\" , "\\")
+						v := StrReplace(v, """", "\""")
+						; k := StrReplace(k, """", "\""")
 						ret .= """" . k . """" . ": " . """" . v . """" . ", "
+					}
 					else
 						ret .= """" . k . """" . ": " . v . ", "
 				}

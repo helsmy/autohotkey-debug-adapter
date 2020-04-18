@@ -33,7 +33,7 @@ class DebugSession extends Application
         response.body["supportsConfigurationDoneRequest"] := "true"
         ; response.body["supportsEvaluateForHovers"] := "true"
         ; response.body["supportsDataBreakpoints"] := "true"
-        response.body["supportsBreakpointLocationsRequest"] := "true"
+        ; response.body["supportsBreakpointLocationsRequest"] := "true"
         response.body["supportsClipboardContext"] := "true"
 
         InitializedEvent := {"type": "event", "event": "initialized"}
@@ -116,6 +116,7 @@ class DebugSession extends Application
             actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0))
             ;verifyEvent.Push(CreateBreakpointEvent("changed", CreateBreakpoint("true", bkp.id, bkp.line)))
         }
+        this._runtime.VerifyBreakpoints()
         ; body
         response["body"] := {}
         response.body["breakpoints"] := actualBreakpoints
@@ -167,7 +168,7 @@ class DebugSession extends Application
 		Loop % stack.where.Length()
 		{
 			source := {"name": this.GetBaseFile(stack.file[A_Index]), "path":StrReplace(stack.file[A_Index], "\", "/"), "sourceReference": 0+0, "adapterData": "mockdata"}
-			stackFrames.Push({"id": A_Index+0, "name": stack.where[A_Index], "line": stack.line[A_Index]+0, "source": source, "column": 1+0}) ;
+			stackFrames.Push({"id": stack.level[A_Index]+0, "name": stack.where[A_Index], "line": stack.line[A_Index]+0, "source": source, "column": 1+0}) ;
 			; MsgBox, % fsarr().print(source)
 		}
         ; response a constant stack frame for now
@@ -180,13 +181,15 @@ class DebugSession extends Application
 
     scopesRequest(response, env)
     {
+        frameId := env.arguments.frameId
         response["body"] := {}
-        response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create("Local"), "expensive": "false"}
-                                  , {"name": "Global", "variablesReference": this._variableHandles.create("Global"), "expensive": "true"}]
+        response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(["Local", frameId]), "expensive": "false"}
+                                  , {"name": "Global", "variablesReference": this._variableHandles.create(["Global", "None"]), "expensive": "true"}]
         return [response]
     }
 
     ; TODO: May long running, need async exec here
+    ; FIXME: UTF char cause wrong
     variablesRequest(response, env)
     {
         ; just return some constant value, for now
@@ -195,11 +198,9 @@ class DebugSession extends Application
         ; Return variable list
         if (id)
         {
-            variablesRaw := this._runtime.CheckVariables(id)
+            variablesRaw := this._runtime.CheckVariables(id[1], id[2])
             Loop % variablesRaw.name.Length()
             {
-				if InStr(variablesRaw.value[A_Index], "\")
-					variablesRaw.value[A_Index] := StrReplace(variablesRaw.value[A_Index], "\", "\\")
 				if InStr(variablesRaw.value[A_Index], """")
 					variablesRaw.value[A_Index] := StrReplace(variablesRaw.value[A_Index], """", "\""")
 				if (variablesRaw.name[A_Index] = "true" or variablesRaw.name[A_Index] = "false")
@@ -210,7 +211,7 @@ class DebugSession extends Application
                                ,"type": variablesRaw.type[A_Index]
                                ,"value": variablesRaw.value[A_Index] == "" ? " " : variablesRaw.value[A_Index]
                                ,"variablesReference"
-							   : variablesRaw.type[A_Index] == "object" ? this._variableHandles.create(variablesRaw.name[A_Index])+0 : 0})
+							   : variablesRaw.type[A_Index] == "object" ? this._variableHandles.create([variablesRaw.name[A_Index], id[2]])+0 : 0})
             }
         }
 		; MsgBox, % fsarr().print(variables)

@@ -2,7 +2,7 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adaptor for AutoHotKey.",
-	"version": "0.0.5",
+	"version": "0.1.0",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
@@ -103,7 +103,8 @@
 		"watch": "tsc -watch -p ./",
 		"pretest": "yarn run compile",
 		"test": "node ./out/test/runTest.js",
-		"package": "vsce package"
+		"package": "vsce package",
+		"publish": "vsce publish"
 	},
 	"devDependencies": {
 		"@types/glob": "^7.1.1",
