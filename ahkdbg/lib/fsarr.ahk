@@ -112,9 +112,11 @@ class __ClASS_AHKFS_ARRAY
 					else if fstype(v) == "String"
 					{
 						v := StrReplace(v, "\" , "\\")
+						; logger("DA -> VSC Raw\: " v)
 						; k := StrReplace(k, "\" , "\\")
 						v := StrReplace(v, """", "\""")
 						; k := StrReplace(k, """", "\""")
+						; logger("DA -> VSC Raw"": " v)
 						ret .= """" . k . """" . ": " . """" . v . """" . ", "
 					}
 					else

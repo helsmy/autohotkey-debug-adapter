@@ -201,17 +201,16 @@ class DebugSession extends Application
             variablesRaw := this._runtime.CheckVariables(id[1], id[2])
             Loop % variablesRaw.name.Length()
             {
-				if InStr(variablesRaw.value[A_Index], """")
-					variablesRaw.value[A_Index] := StrReplace(variablesRaw.value[A_Index], """", "\""")
 				if (variablesRaw.name[A_Index] = "true" or variablesRaw.name[A_Index] = "false")
 					variablesRaw.name[A_Index] .= " "
 				; FIXME: "" return value is undefined,
 				; FIXME: problem in name is 'true' or 'false'
                 variables.Push({"name": variablesRaw.name[A_Index]
                                ,"type": variablesRaw.type[A_Index]
-                               ,"value": variablesRaw.value[A_Index] == "" ? " " : variablesRaw.value[A_Index]
+                               ,"value": variablesRaw.type[A_Index] == "undefined" ? "undefined" : variablesRaw.value[A_Index]
                                ,"variablesReference"
-							   : variablesRaw.type[A_Index] == "object" ? this._variableHandles.create([variablesRaw.name[A_Index], id[2]])+0 : 0})
+							   : variablesRaw.type[A_Index] == "object" 
+                               ? this._variableHandles.create([variablesRaw.name[A_Index], id[2]])+0 : 0})
             }
         }
 		; MsgBox, % fsarr().print(variables)

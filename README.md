@@ -41,6 +41,10 @@ Support redirecting standard io streams to debug console.
 1. Fix bugs abort breakpoints.
 2. Support viewing variables in different stacks.
 
+### 0.1.1
+
+1. Fix display bugs
+
 ## Furture Plan
 
 * [ ] Support Evaluate For Hovers
