@@ -43,7 +43,7 @@ fstype(obj)
     }
 
     if (obj == "")
-        return "None"
+        return "String"
 
     return obj := "" || [obj].GetCapacity(1) ? "String" : InStr(obj,".") ? "Float" : "Integer"
 }
