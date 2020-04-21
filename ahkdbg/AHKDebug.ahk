@@ -260,11 +260,15 @@ class DebugSession extends Application
 		if Util_ProcessExist(this.Dbg_PID)
 			Process, Close, % this.Dbg_PID
 		this.isStart := false
-        ExitApp
+        ; TODO: ExitApp here
+        ; if ！env.arguments.restart
+        ;     SetTimer, quit, -100    
+        return [response]
     }
 
 	errorResponse(response, env)
 	{
+        ; TODO: send error info here
 		response.success := "false"
 		return [response]
 	}

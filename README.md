@@ -1,6 +1,6 @@
 # AutoHotKey Debug
 
-Simple debug adaptor for AutoHotKey implemented by AutoHotKey.
+Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 ## Features
 
@@ -43,7 +43,12 @@ Support redirecting standard io streams to debug console.
 
 ### 0.1.1
 
-1. Fix display bugs
+1. Fix display bugs.
+
+### 0.2.0
+
+1. Disconnect correctly(able to restart).
+2. Fix pause request.
 
 ## Furture Plan
 

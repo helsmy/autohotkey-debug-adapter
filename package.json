@@ -1,8 +1,8 @@
 {
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
-	"description": "Debug Adaptor for AutoHotKey.",
-	"version": "0.1.1",
+	"description": "Debug Adapter for AutoHotKey.",
+	"version": "0.2.0",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
