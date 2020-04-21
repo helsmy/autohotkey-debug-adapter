@@ -108,7 +108,7 @@ class AHKRunTime
 
 	Pause()
 	{
-		Dbg_Session.Send("break", "", Func("DummyCallback"))
+		this.Dbg_Session.Send("break", "", Func("DummyCallback"))
 	}
 
 	Dbg_GetStack()
