@@ -6,6 +6,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 * Basic debug functions. Step into, step out, breakpoints etc.
 * Show call stack and varibles.
+* Debug ahkv2 since debug protocol do not change.(by set AhkExecutable path to v2 in launch.json)
 
 ## Using
 
@@ -19,6 +20,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 * `stopOnEntry`: stop on entry or not.
 * `captureStreams`: capture io streams or not.
+* `AhkExecutable`: change Default Execute Path(by default is `C:\Program Files\Autohotkey\AutoHotkey.exe`).
 
 ## Known Issues
 
@@ -49,6 +51,11 @@ Support redirecting standard io streams to debug console.
 
 1. Disconnect correctly(able to restart).
 2. Fix pause request.
+
+### 0.2.1
+
+1. Use inner ahk
+2. Add config option AhkExecutable
 
 ## Furture Plan
 

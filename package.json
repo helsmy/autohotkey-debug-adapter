@@ -44,7 +44,7 @@
 				"type": "ahkdbg",
 				"label": "AutoHotKey Debug",
 				"program": "./ahkdbg/debugAdapter.ahk",
-				"runtime": "C:/Program Files/AutoHotkey/AutoHotkey.exe",
+				"runtime": "./bin/AutoHotkey.exe",
 				"languages": ["ahk", "autohotkey"],
 				"configurationAttributes": {
 					"launch": {
@@ -66,7 +66,12 @@
 								"type": "boolean",
 								"description": "Whether to receive standard io stream.",
 								"default": true
-							}
+							},
+							"AhkExecutable": {
+								"type": "string",
+								"description": "Absolute path of executable file of AutoHotKey",
+								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
+							} 
 						}
 					}
 				},
@@ -74,10 +79,11 @@
 					{
 						"type": "ahkdbg",
 						"request": "launch",
-						"name": "Ask for file name",
+						"name": "AHKDebug",
 						"program": "${workspaceRoot}/${fileBasename}",
 						"stopOnEntry": true,
-						"captureStreams" : true
+						"captureStreams" : true,
+						"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
 					}
 				],
 				"configurationSnippets": [
@@ -90,7 +96,8 @@
 							"name": "Ask for file name",
 							"program": "^\"\\${workspaceRoot}/\\${fileBasename}\"",
 							"stopOnEntry": true,
-							"captureStreams" : true
+							"captureStreams" : true,
+							"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
 						}
 					}
 				]
