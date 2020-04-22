@@ -57,6 +57,7 @@ class DebugSession extends Application
 		if !this.isStart
 		{
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
+            this._runtime.AhkExecutable := env.arguments.AhkExecutable
 			this._runtime.Start(env.arguments.program)
 			this.isStart := true
 		}
@@ -211,6 +212,9 @@ class DebugSession extends Application
                                ,"variablesReference"
 							   : variablesRaw.type[A_Index] == "object" 
                                ? this._variableHandles.create([variablesRaw.name[A_Index], id[2]])+0 : 0})
+                               ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
+                if variablesRaw.facet == "Builtin"
+                    variables[A_Index]["presentationHint"] := {"attributes": ["constant", "readOnly"]}
             }
         }
 		; MsgBox, % fsarr().print(variables)

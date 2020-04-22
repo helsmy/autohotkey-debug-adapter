@@ -319,8 +319,9 @@ class AHKRunTime
 		name := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@name"))
 		value := Util_UnpackContNodes(ScopeContext.selectNodes("/response/property"))
 		type := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@type"))
+		facet := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@facet"))
 
-		return {"name": name, "value": value, "type": type}
+		return {"name": name, "value": value, "type": type, "facet": facet}
 	}
 
 	InspectObject(ByRef objdom)
