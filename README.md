@@ -11,8 +11,10 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 ## Using
 
 1. Open an AutoHotKey source file.
-2. Switch to the debug viewlet.
-3. Press the green 'play' button to start debugging.
+2. For most simple way, press f5 to debug it.
+3. If you want to start at a specific setting. Switch to the debug viewlet.
+4. Press the green 'play' button, if vs code doesn't find launch.json, it will creat one for you. Save it and switch back to ahk file you open.
+5. Press the green button again, debugger will start.
 
 ![Debug](images/debugging.gif)
 
