@@ -2,7 +2,7 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adapter for AutoHotKey.",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
@@ -54,7 +54,7 @@
 						"properties": {
 							"program": {
 								"type": "string",
-								"description": "Absolute path to a text file.",
+								"description": "Absolute path to an ahk file.",
 								"default": "${workspaceRoot}/${fileBasename}"
 							},
 							"stopOnEntry": {
@@ -71,7 +71,12 @@
 								"type": "string",
 								"description": "Absolute path of executable file of AutoHotKey",
 								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
-							} 
+							},
+							"port": {
+								"type": "number",
+								"description": "The port on which to listen for XDebug",
+								"default": 9005
+							}
 						}
 					}
 				},
@@ -83,7 +88,8 @@
 						"program": "${workspaceRoot}/${fileBasename}",
 						"stopOnEntry": true,
 						"captureStreams" : true,
-						"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
+						"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+						"port": 9005
 					}
 				],
 				"configurationSnippets": [
@@ -93,11 +99,12 @@
 						"body": {
 							"type": "ahkdbg",
 							"request": "launch",
-							"name": "Ask for file name",
+							"name": "A new configuration for 'debugging' AutoHotKey.",
 							"program": "^\"\\${workspaceRoot}/\\${fileBasename}\"",
 							"stopOnEntry": true,
 							"captureStreams" : true,
-							"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
+							"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+							"port": 9005
 						}
 					}
 				]

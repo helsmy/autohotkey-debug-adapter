@@ -8,6 +8,6 @@ vsc-extension-quickstart.md
 **/tslint.json
 **/*.map
 **/*.ts
-*.bak
+ahkdbg/*.bak
 *.vsix
-ahkdbg.log
+ahkdbg/ahkdbg.log
