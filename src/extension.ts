@@ -47,7 +47,9 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.program = '${file}';
 				config.stopOnEntry = true;
 				config.captureStreams = true;
-				config.AhkExecutable = "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe";
+				config.AhkExecutable = ""; // Empty value to make da acquire executable path
+				config.port = 9005;
+				// config.log = false;
 			}
 		}
 

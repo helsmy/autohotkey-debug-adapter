@@ -45,8 +45,8 @@ class ProtocolServer
         ; Construct environment dictionary using request data
         env := this.RH.ParseRequest(request_data)
 		env.server := this
-		; if env.command != "waitConfiguration"
-		; 	logger("VSC -> DA Request: " request_data)
+		if env.command != "waitConfiguration"
+			logger("VSC -> DA Request: " request_data)
         result := this.application(env)
 
         ; Construct a response and send it back to the client
@@ -141,10 +141,10 @@ class RequestHandler
 		responseStr := StrReplace(responseStr, "`n" , "\n")
 		responseStr := StrReplace(responseStr, "`t" , "\t")
 		responseStr := StrReplace(responseStr, "`r" , "\r")
-		; if response.type == "event"
-		; 	logger("DA -> VSC event: " responseStr)
-		; else
-		; 	logger("DA -> VSC Response: " responseStr)
+		if response.type == "event"
+			logger("DA -> VSC event: " responseStr)
+		else
+			logger("DA -> VSC Response: " responseStr)
 		responseStr := "Content-Length: " . StrLen(responseStr) . "`r`n`r`n" . responseStr
 
 		this.outStream.Write(responseStr)

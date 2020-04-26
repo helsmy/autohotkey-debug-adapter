@@ -57,14 +57,15 @@ class DebugSession extends Application
 		if !this.isStart
 		{
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
-            this._runtime.AhkExecutable := env.arguments.AhkExecutable
+            this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
+            this._runtime.dbgPort := env.arguments.port
 			this._runtime.Start(env.arguments.program)
 			this.isStart := true
 		}
 
         ; wait until configuration has finished (and configurationDoneRequest has been called)
         ; Async wait by send WaitConfiguration event to event queue
-        if (!this._configurationDone) ; and !this._timeout
+        if (!this._configurationDone and !this._timeout)
         {
             CTO := ObjBindMethod(this, "CheckTimeOut")
             SetTimer, % CTO, -1000
@@ -226,6 +227,7 @@ class DebugSession extends Application
 
     continueRequest(response, env)
     {
+        this._variableHandles.Reset()
         this._runtime.Continue()
         return [response]
     }

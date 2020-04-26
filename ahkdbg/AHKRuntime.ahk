@@ -9,8 +9,9 @@ class AHKRunTime
 		this.dbgAddr := "127.0.0.1"
 		this.dbgPort := 9005 ;temp mock debug port
 		this.bIsAttach := false
-		this.dbgCaptureStreams := false ; unsupport this for now
-		this.AhkExecutable := A_AhkPath
+		this.dbgCaptureStreams := false
+		RegRead, ahkpath, HKEY_CLASSES_ROOT\AutoHotkeyScript\DefaultIcon
+		this.AhkExecutable := SubStr(ahkpath, 1, -2)
 		this.Dbg_Session := ""
 		this.Dbg_BkList := {}
 		this.dbgMaxChildren := 10+0
@@ -31,9 +32,9 @@ class AHKRunTime
 
 	Start(path)
 	{
-		;global Dbg_Session
-		this.path := path, szFilename := path,AhkExecutable := this.AhkExecutable
-		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort
+		; Ensure that some important constants exist
+		this.path := path, szFilename := path,AhkExecutable := this.AhkExecutable ? this.AhkExecutable : "C:\Program Files\AutoHotkey\AutoHotkey.exe"
+		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
 		; Now really run AutoHotkey and wait for it to connect
 		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
 		; DebugRun
@@ -188,7 +189,6 @@ class AHKRunTime
 		status := dom.selectSingleNode("/response/@status").text ; get the status
 		if status = break
 		{ ; this is a break response
-			;SciTE_ToggleRunButton()
 			this.Dbg_OnBreak := true ; set the Dbg_OnBreak variable
 			; Get info about the script currently running
 			this.Dbg_GetStack()
@@ -218,7 +218,6 @@ class AHKRunTime
 		Dbg_ExitByGuiClose := true
 		Dbg_IsClosing := true
 		Dbg_OnBreak := true
-		; TODO: Send TerminatedEvent to vs code
 		this.SendEvent(CreateTerminatedEvent())
 	}
 

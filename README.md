@@ -20,9 +20,14 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 ## Supported Settings of Launch.json
 
+* `type`: always ahkdbg.
+* `request`: always launch.
+* `name`: name of a specific setting.
+* `program`: script file to be debugged(by default is file under editing).
 * `stopOnEntry`: stop on entry or not.
 * `captureStreams`: capture io streams or not.
-* `AhkExecutable`: change Default Execute Path(by default is `C:\Program Files\Autohotkey\AutoHotkey.exe`).
+* `AhkExecutable`: change Default Execute Path(by default is automaticlly acquired through registry, usualy is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
+* `port`: The port on which to listen for XDebug (default: 9005)
 
 ## Known Issues
 
