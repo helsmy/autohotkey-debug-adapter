@@ -205,7 +205,6 @@ class DebugSession extends Application
             {
 				if (variablesRaw.name[A_Index] = "true" or variablesRaw.name[A_Index] = "false")
 					variablesRaw.name[A_Index] .= " "
-				; FIXME: "" return value is undefined,
 				; FIXME: problem in name is 'true' or 'false'
                 variables.Push({"name": variablesRaw.name[A_Index]
                                ,"type": variablesRaw.type[A_Index]
@@ -250,7 +249,7 @@ class DebugSession extends Application
     {
 		this._variableHandles.Reset()
         this._runtime.StepOut()
-        return [response]
+        return [response, CreateStoppedEvent("step", DebugSession.THREAD_ID)]
     }
 
 	pauseRequest(response, env)

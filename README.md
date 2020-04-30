@@ -61,8 +61,13 @@ Support redirecting standard io streams to debug console.
 
 ### 0.2.1
 
-1. Use inner ahk
-2. Add config option AhkExecutable
+1. Use inner ahk.
+2. Add config option AhkExecutable.
+
+### 0.3.0
+
+1. Autodetect ahk executable.
+2. Fix stopped reason display.
 
 ## Furture Plan
 

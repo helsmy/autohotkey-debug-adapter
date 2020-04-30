@@ -17,6 +17,7 @@ class AHKRunTime
 		this.dbgMaxChildren := 10+0
 		this.currline := 0
 		this.isStart := false
+		this.stopForBreak := true
 	}
 
 	Init(clientArgs)
@@ -68,6 +69,7 @@ class AHKRunTime
 		ErrorLevel = 0
 		this.Dbg_OnBreak := false
 		this.Dbg_HasStarted := true
+		this.stopForBreak := false
 		this.Dbg_Session.step_into()
 	}
 
@@ -76,6 +78,7 @@ class AHKRunTime
 		ErrorLevel = 0
 		this.Dbg_OnBreak := false
 		this.Dbg_HasStarted := true
+		this.stopForBreak := false
 		this.Dbg_Session.step_over()
 	}
 
@@ -84,6 +87,7 @@ class AHKRunTime
 		ErrorLevel = 0
 		this.Dbg_OnBreak := false
 		this.Dbg_HasStarted := true
+		this.stopForBreak := false
 		this.Dbg_Session.step_out()
 	}
 
@@ -109,6 +113,7 @@ class AHKRunTime
 
 	Pause()
 	{
+		this.stopForBreak := false
 		this.Dbg_Session.Send("break", "", Func("DummyCallback"))
 	}
 
@@ -177,10 +182,7 @@ class AHKRunTime
 			; A breakpoint was hit while the script running and the SciTE OnMessage thread is
 			; still running. In order to avoid crashing, we must delay this function's processing
 			; until the OnMessage thread is finished.
-			_tempResponse := response
 			ODB := ObjBindMethod(this, "OnDebuggerBreak")
-			; TryHandlingBreakAgain, Send fucntion to Event Queue
-			; SetTimer, TryHandlingBreakAgain, -100
 			EventDispatcher.PutDelay(ODB, [session, response])
 			return
 		}
@@ -192,10 +194,11 @@ class AHKRunTime
 			this.Dbg_OnBreak := true ; set the Dbg_OnBreak variable
 			; Get info about the script currently running
 			this.Dbg_GetStack()
-			; TODO: Send StopEvent to vscode
-			this.SendEvent(CreateStoppedEvent("breakpoint", 1))
+			; Check if we are stopped because of hitting a breakpoint
+			if this.stopForBreak
+				this.SendEvent(CreateStoppedEvent("breakpoint", DebugSession.THREAD_ID))
+			this.stopForBreak := true
 		}
-
 	}
 
 	; OnDebuggerStream() - fired when we receive a stream packet.
