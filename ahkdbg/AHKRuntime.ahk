@@ -105,6 +105,7 @@ class AHKRunTime
 		if stopOnEntry
 		{
 			this.StepIn()
+			; FIXME: don't hardcore thread id
 			this.SendEvent(CreateStoppedEvent("entry", 1))
 		}
 		else
@@ -372,6 +373,21 @@ class AHKRunTime
 			aStackFile[A_Index] := DBGp_DecodeFileURI(aStackFile[A_Index])
 
 		return {"file": aStackFile, "line": aStackLine, "where": aStackWhere, "level": aStackLevel}
+	}
+
+	GetScopeNames(frameId)
+	{
+		if this.Dbg_Session.context_names("-d " frameId, response) != 0
+			throw Exception("Xdebug error", -1, ErrorLevel)
+		dom := loadXML(response)
+		contexts := dom.selectNodes("/response/context/@name")
+		scopes := []
+		Loop % contexts.length
+		{
+			context := contexts.item[A_Index-1].text
+			scopes.Push(node.attributes.getNamedItem("name").text)
+		}
+		return scopes
 	}
 
 	AddBk(uri, line, id, cond := "")
