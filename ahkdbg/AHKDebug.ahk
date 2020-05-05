@@ -187,6 +187,12 @@ class DebugSession extends Application
         response["body"] := {}
         response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(["Local", frameId]), "expensive": "false"}
                                   , {"name": "Global", "variablesReference": this._variableHandles.create(["Global", "None"]), "expensive": "true"}]
+        ; scopes := this.GetScopeNames(frameId)
+        ; response["body"] := {"scopes": []}
+        ; for _, scope in scopes
+        ;     response.body.scopes.Push({"name": scope
+        ;                              , "variablesReference": this._variableHandles.create(["Local", frameId])
+        ;                              , "expensive": (scope == "Global") ? "true": "false"})
         return [response]
     }
 
@@ -208,7 +214,7 @@ class DebugSession extends Application
 				; FIXME: problem in name is 'true' or 'false'
                 variables.Push({"name": variablesRaw.name[A_Index]
                                ,"type": variablesRaw.type[A_Index]
-                               ,"value": variablesRaw.type[A_Index] == "undefined" ? "undefined" : variablesRaw.value[A_Index]
+                               ,"value": variablesRaw.type[A_Index] == "undefined" ? "<undefined>" : variablesRaw.value[A_Index]
                                ,"variablesReference"
 							   : variablesRaw.type[A_Index] == "object" 
                                ? this._variableHandles.create([variablesRaw.name[A_Index], id[2]])+0 : 0})

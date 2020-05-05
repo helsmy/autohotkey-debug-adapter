@@ -35,6 +35,12 @@ An early version which needs test. Use it at you own risk.
 1. Unsupport for non-ascii characters.
 2. ~~Breakpoint may can't set or cancel~~ (solution: fixed)
 
+## Furture Plan
+
+* [ ] Support Evaluate For Hovers
+* [x] Support debug console
+* [ ] Change value of varible in debugging
+
 ## Release Notes
 
 ### 0.0.3
@@ -69,8 +75,6 @@ Support redirecting standard io streams to debug console.
 1. Autodetect ahk executable.
 2. Fix stopped reason display.
 
-## Furture Plan
+### 0.3.1
 
-* [ ] Support Evaluate For Hovers
-* [x] Support debug console
-* [ ] Change value of varible in debugging
+1. Improve undefined variable display.
