@@ -31,11 +31,21 @@ class AHKRunTime
 		; DebuggerInit
 	}
 
-	Start(path)
+	Start(path, noDebug := false)
 	{
 		; Ensure that some important constants exist
 		this.path := path, szFilename := path,AhkExecutable := this.AhkExecutable ? this.AhkExecutable : "C:\Program Files\AutoHotkey\AutoHotkey.exe"
 		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
+		SplitPath, szFilename,, szDir
+
+		if noDebug
+		{
+			Run, "%AhkExecutable%" "%szFilename%", %szDir%
+			this.DBGp_CloseDebugger(true)
+			this.SendEvent(CreateTerminatedEvent())
+			return
+		}
+
 		; Now really run AutoHotkey and wait for it to connect
 		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
 		; DebugRun
@@ -45,6 +55,7 @@ class AHKRunTime
 		while ((Dbg_AHKExists := Util_ProcessExist(Dbg_PID)) && this.Dbg_Session == "") ; wait for AutoHotkey to connect or exit
 			Sleep, 100 ; avoid smashing the CPU
 		DBGp_StopListening(this.Dbg_Socket) ; stop accepting script connection
+		this.isStart := true
 	}
 
 	GetPath()
@@ -241,15 +252,9 @@ class AHKRunTime
 	{
 		uri := DBGp_EncodeFileURI(this.path)
 		bk := this.GetBk(uri, line)
-		; if bk
-		; {
-			; this.Dbg_Session.breakpoint_remove("-d " bk.id)
-			; response vs code here
-			; SciTE_BPSymbolRemove(line)
-			; this.RemoveBk(uri, line)
-		; 	return {"verified": "true", "line": line, "id": bk.id}
-		; }else
-		; {
+		if !this.isStart
+			return {"verified": "false", "line": line, "id": bk.id}
+		
 		this.bInBkProcess := true
 		this.Dbg_Session.breakpoint_set("-t line -n " line " -f " uri, Dbg_Response)
 		If InStr(Dbg_Response, "<error") ; Check if AutoHotkey actually inserted the breakpoint.
@@ -375,9 +380,9 @@ class AHKRunTime
 		return {"file": aStackFile, "line": aStackLine, "where": aStackWhere, "level": aStackLevel}
 	}
 
-	GetScopeNames(frameId)
+	GetScopeNames()
 	{
-		if this.Dbg_Session.context_names("-d " frameId, response) != 0
+		if this.Dbg_Session.context_names("", response) != 0
 			throw Exception("Xdebug error", -1, ErrorLevel)
 		dom := loadXML(response)
 		contexts := dom.selectNodes("/response/context/@name")
@@ -385,7 +390,7 @@ class AHKRunTime
 		Loop % contexts.length
 		{
 			context := contexts.item[A_Index-1].text
-			scopes.Push(node.attributes.getNamedItem("name").text)
+			scopes.Push(context)
 		}
 		return scopes
 	}
