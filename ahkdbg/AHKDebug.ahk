@@ -59,7 +59,10 @@ class DebugSession extends Application
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
             this._runtime.dbgPort := env.arguments.port
-			this._runtime.Start(env.arguments.program)
+            noDebug := (env.arguments.noDebug == "true") ? true : false
+            if noDebug
+                env.server.keepRun := false ; Stop server, not a good solution for running without debug
+			this._runtime.Start(env.arguments.program, noDebug)
 			this.isStart := true
 		}
 
@@ -170,10 +173,9 @@ class DebugSession extends Application
 		Loop % stack.where.Length()
 		{
 			source := {"name": this.GetBaseFile(stack.file[A_Index]), "path":StrReplace(stack.file[A_Index], "\", "/"), "sourceReference": 0+0, "adapterData": "mockdata"}
-			stackFrames.Push({"id": stack.level[A_Index]+0, "name": stack.where[A_Index], "line": stack.line[A_Index]+0, "source": source, "column": 1+0}) ;
+			stackFrames.Push({"id": stack.level[A_Index]+0, "name": stack.where[A_Index], "line": stack.line[A_Index]+0, "source": source, "column": 0}) ;
 			; MsgBox, % fsarr().print(source)
 		}
-        ; response a constant stack frame for now
         response["body"] := {}
         response.body["stackFrames"] := stackFrames
         response.body["totalFrames"] := stackFrames.Length()
@@ -187,12 +189,6 @@ class DebugSession extends Application
         response["body"] := {}
         response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(["Local", frameId]), "expensive": "false"}
                                   , {"name": "Global", "variablesReference": this._variableHandles.create(["Global", "None"]), "expensive": "true"}]
-        ; scopes := this.GetScopeNames(frameId)
-        ; response["body"] := {"scopes": []}
-        ; for _, scope in scopes
-        ;     response.body.scopes.Push({"name": scope
-        ;                              , "variablesReference": this._variableHandles.create(["Local", frameId])
-        ;                              , "expensive": (scope == "Global") ? "true": "false"})
         return [response]
     }
 

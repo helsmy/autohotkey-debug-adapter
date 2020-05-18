@@ -2,7 +2,7 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adapter for AutoHotKey.",
-	"version": "0.3.1",
+	"version": "0.4.0",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
@@ -39,6 +39,14 @@
 				"language": "autohotkey"
 			}
 		],
+		"properties": {
+
+			"autohotkey.executable": {
+				"type": "string",
+				"default": "C:\\Program Files\\Autohotkey\\AutoHotkey.exe",
+				"description": "Absolute path of executable file of AutoHotKey"
+			}
+		},
 		"debuggers": [
 			{
 				"type": "ahkdbg",
@@ -88,7 +96,7 @@
 						"program": "${workspaceRoot}/${fileBasename}",
 						"stopOnEntry": true,
 						"captureStreams" : true,
-						"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+						"AhkExecutable": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
 						"port": 9005
 					}
 				],
@@ -103,7 +111,7 @@
 							"program": "^\"\\${workspaceRoot}/\\${fileBasename}\"",
 							"stopOnEntry": true,
 							"captureStreams" : true,
-							"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+							"AhkExecutable": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
 							"port": 9005
 						}
 					}
