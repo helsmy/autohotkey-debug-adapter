@@ -26,7 +26,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * `program`: script file to be debugged(by default is file under editing).
 * `stopOnEntry`: stop on entry or not.
 * `captureStreams`: capture io streams or not.
-* `AhkExecutable`: change Default Execute Path(by default is automaticlly acquired through registry, usualy is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
+* `AhkExecutable`: change Default Execute Path(by default is automaticlly acquired through registry, usually is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
 * `port`: The port on which to listen for XDebug (default: 9005)
 
 ## Known Issues
@@ -78,3 +78,7 @@ Support redirecting standard io streams to debug console.
 ### 0.3.1
 
 1. Improve undefined variable display.
+
+### 0.4.0
+
+1. run without debug

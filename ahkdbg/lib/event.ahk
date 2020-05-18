@@ -18,6 +18,11 @@ CreateTerminatedEvent(restart := "")
 	return event
 }
 
+CreateExitedEvent(code := 0)
+{
+	return {"type": "event", "event": "exited", "body": {"exitCode": code+0}}
+} 
+
 CreateOutputEvent(category, output)
 {
 	return {"type": "event", "event": "output", "body": {"category": category, "output": output}}
