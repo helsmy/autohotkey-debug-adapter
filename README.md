@@ -82,3 +82,8 @@ Support redirecting standard io streams to debug console.
 ### 0.4.0
 
 1. run without debug
+
+### 0.4.1
+
+1. fix breakpoints bugs in cross file
+

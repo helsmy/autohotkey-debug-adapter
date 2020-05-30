@@ -103,7 +103,7 @@ class DebugSession extends Application
         return this.launchRequest(response, env)
     }
 
-    setBreakPointsRequest(response, env)
+    setBreakpointsRequest(response, env)
     {
         path := env.arguments.source.path
         clientLines := env.arguments.breakpoints
@@ -118,8 +118,7 @@ class DebugSession extends Application
 			; Why no Exception about wrong parameter?
             bkp := this._runtime.SetBreakpoint(path, line.line)
             ; Fuck Weakly Typed!
-            actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0))
-            ;verifyEvent.Push(CreateBreakpointEvent("changed", CreateBreakpoint("true", bkp.id, bkp.line)))
+            actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, 0, bkp.source))
         }
         this._runtime.VerifyBreakpoints()
         ; body
@@ -263,13 +262,13 @@ class DebugSession extends Application
 
     disconnectRequest(response, env)
     {
-        this._runtime.DBGp_CloseDebugger()
+        this._runtime.DBGp_CloseDebugger(true)
 		if Util_ProcessExist(this.Dbg_PID)
 			Process, Close, % this.Dbg_PID
 		this.isStart := false
-        ; TODO: ExitApp here
-        ; if ！env.arguments.restart
-        ;     SetTimer, quit, -100    
+
+        if ！env.arguments.restart
+            env.server.keepRun := false  
         return [response]
     }
 
