@@ -25,7 +25,7 @@ CreateExitedEvent(code := 0)
 
 CreateOutputEvent(category, output)
 {
-	return {"type": "event", "event": "output", "body": {"category": category, "output": output}}
+	return {"type": "event", "event": "output", "body": {"category": category, "output": output "`n"}}
 }
 
 CreateBreakpoint(verified, id := "", line := "", column := "", source := "")

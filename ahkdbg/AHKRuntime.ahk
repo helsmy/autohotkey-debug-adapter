@@ -142,7 +142,7 @@ class AHKRunTime
 	{
 		if !this.bIsAsync && !force && !this.Dbg_OnBreak
 		{
-			MsgBox, 52, %g_appTitle%, The script is running. Stopping it would mean loss of data. Proceed?
+			MsgBox, 52, % this.path ", The script is running. Stopping it would mean loss of data. Proceed?"
 			IfMsgBox, No
 				return 0 ; fail
 		}
@@ -150,8 +150,8 @@ class AHKRunTime
 		if this.bIsAsync || this.Dbg_OnBreak
 		{
 			; If we're on a break or the debugger is async we don't need to force the debugger to terminate
-			if this.Dbg_Session.stop() != 0
-				throw Exception("Debug session stop fail.", -1)
+			this.Dbg_Session.stop()
+				; throw Exception("Debug session stop fail.", -1)
 			this.Dbg_Session.Close()
 		}else ; nope, we're not on a break, kill the process
 		{
@@ -238,7 +238,7 @@ class AHKRunTime
 
 	clearBreakpoints(path)
 	{
-		uri := DBGp_EncodeFileURI(this.path)
+		uri := DBGp_EncodeFileURI(path)
 		for line, bk in this.Dbg_BkList[uri]
 			this.Dbg_Session.breakpoint_remove("-d " bk.id)
 		; MsgBox, % line " " fsarr().Print(bk)
@@ -250,37 +250,43 @@ class AHKRunTime
 	; @line: 1 based lineno
 	SetBreakpoint(path, line)
 	{
-		uri := DBGp_EncodeFileURI(this.path)
+		uri := DBGp_EncodeFileURI(path)
 		bk := this.GetBk(uri, line)
 		if !this.isStart
 			return {"verified": "false", "line": line, "id": bk.id}
 		
 		this.bInBkProcess := true
 		this.Dbg_Session.breakpoint_set("-t line -n " line " -f " uri, Dbg_Response)
-		If InStr(Dbg_Response, "<error") ; Check if AutoHotkey actually inserted the breakpoint.
+		If InStr(Dbg_Response, "<error") || !Dbg_Response ; Check if AutoHotkey actually inserted the breakpoint.
 		{
-			; MsgBox, Set error
 			this.bInBkProcess := false
 			; TODO: return reason to frontend
 			return {"verified": "false", "line": line, "id": ""}
 		}
-		;MsgBox, Set success
+
 		dom := loadXML(Dbg_Response)
 		bkID := dom.selectSingleNode("/response/@id").text
 		this.Dbg_Session.breakpoint_get("-d " bkID, Dbg_Response)
 		dom := loadXML(Dbg_Response)
 		line := dom.selectSingleNode("/response/breakpoint[@id=" bkID "]/@lineno").text
-		this.AddBk(uri, line, bkID)
+		;remove 'file:///' in begin, make uri format some
+		sourceUri := SubStr(dom.selectSingleNode("/response/breakpoint[@id=" bkID "]/@filename").text, 9)
+		sourcePath := DBGp_DecodeFileURI(sourceUri)
+		this.AddBk(sourceUri, line, bkID)
 		this.bInBkProcess := false
-		return {"verified": "true", "line": line, "id": bkID}
-		; }
+		; FIXME: debug
+		this.SendEvent(CreateOutputEvent("stdout",  sourcePath " " path " " line))
+		return {"verified": "true", "line": line, "id": bkID, "source": sourcePath}
 	}
 
 	VerifyBreakpoints()
 	{
-		uri := DBGp_EncodeFileURI(this.path)
-		for line, bk in this.Dbg_BkList[uri]
-			this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("true", bk.id, line)))
+		for _, uri in this.Dbg_BkList
+		{
+			sourcePath := DBGp_DecodeFileURI(uri)
+			for line, bk in uri
+				this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("true", bk.id, line, , sourcePath)))
+		}
 	}
 
 	InspectVariable(Dbg_VarName, frameId)
