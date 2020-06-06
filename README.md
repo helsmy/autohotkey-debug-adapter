@@ -6,6 +6,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 * Basic debug functions. Step into, step out, breakpoints etc.
 * Show call stack and varibles.
+* change varibles in debugging
 * Debug ahkv2 since debug protocol do not change.(by set AhkExecutable path to v2 in launch.json)
 
 ## Using
@@ -39,7 +40,8 @@ An early version which needs test. Use it at you own risk.
 
 * [ ] Support Evaluate For Hovers
 * [x] Support debug console
-* [ ] Change value of varible in debugging
+* [x] Change value of varible in debugging
+* [ ] Change value with type
 
 ## Release Notes
 
@@ -86,4 +88,8 @@ Support redirecting standard io streams to debug console.
 ### 0.4.1
 
 1. fix breakpoints bugs in cross file
+
+### 0.5.0
+
+1. change varibles in debugging
 

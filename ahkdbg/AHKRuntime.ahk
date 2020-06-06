@@ -275,7 +275,7 @@ class AHKRunTime
 		this.AddBk(sourceUri, line, bkID)
 		this.bInBkProcess := false
 		; FIXME: debug
-		this.SendEvent(CreateOutputEvent("stdout",  sourcePath " " path " " line))
+		; this.SendEvent(CreateOutputEvent("stdout",  sourcePath " " path " " line))
 		return {"verified": "true", "line": line, "id": bkID, "source": sourcePath}
 	}
 
@@ -296,7 +296,8 @@ class AHKRunTime
 		if (frameId != "None")
 			this.Dbg_Session.property_get("-n " . Dbg_VarName . " -d " . frameId, Dbg_Response)
 		else
-			this.Dbg_Session.property_get("-n " Dbg_VarName, Dbg_Response)
+		; context id of a global variable is 1
+			this.Dbg_Session.property_get("-c 1 -n " Dbg_VarName, Dbg_Response)
 		this.SetEnableChildren(false)
 		dom := loadXML(Dbg_Response)
 
@@ -306,10 +307,11 @@ class AHKRunTime
 			MsgBox, 48, %g_appTitle%, Invalid variable name: %Dbg_VarName%
 			return false
 		}
-		if dom.selectSingleNode("/response/property/@type").text != "Object"
+		if ((type := dom.selectSingleNode("/response/property/@type").text) != "Object")
 		{
 			Dbg_VarIsReadOnly := dom.selectSingleNode("/response/property/@facet").text = "Builtin"
 			Dbg_VarData := DBGp_Base64UTF8Decode(dom.selectSingleNode("/response/property").text)
+			Dbg_VarData := {"name": Dbg_NewVarName, "value": Dbg_VarData, "type": type}
 			;VE_Create(Dbg_VarName, Dbg_VarData, Dbg_VarIsReadOnly)
 		}else
 			Dbg_VarData := this.InspectObject(dom)
@@ -359,6 +361,20 @@ class AHKRunTime
 		return {"name": name, "value": value, "type": type}
 	}
 
+	SetVariable(varFullName, frameId, value)
+	{	
+		if (frameId != "None")
+			cmd := "-n " varFullName " -d " frameId " -- "
+		else
+		; context id of a global variable is 1
+			cmd := "-c 1 -n " varFullName " -- "
+
+		this.Dbg_Session.property_set(cmd . DBGp_Base64UTF8Encode(value), Dbg_Response)
+		if !InStr(Dbg_Response, "success=""1""")
+			throw Exception("Set fail!", -1, "Variable may be immutable.")
+		return this.InspectVariable(varFullName, frameId)
+	}
+
 	SetEnableChildren(v)
 	{
 		Dbg_Session := this.Dbg_Session
@@ -379,11 +395,19 @@ class AHKRunTime
 		aStackWhere := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@where"))
 		aStackFile  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@filename"))
 		aStackLine  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@lineno"))
-		aStackLevel  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@level"))
+		aStackLevel := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@level"))
 		Loop, % aStackFile.Length()
 			aStackFile[A_Index] := DBGp_DecodeFileURI(aStackFile[A_Index])
 
 		return {"file": aStackFile, "line": aStackLine, "where": aStackWhere, "level": aStackLevel}
+	}
+
+	GetStackDepth()
+	{
+		this.Dbg_Session.stack_depth( , Dbg_Response)
+		startpos := InStr(Dbg_Response, "depth=""")+7
+		, depth := SubStr(Dbg_Response, startpos, InStr(Dbg_Response,"""", ,startpos) - startpos)
+		return depth
 	}
 
 	GetScopeNames()
