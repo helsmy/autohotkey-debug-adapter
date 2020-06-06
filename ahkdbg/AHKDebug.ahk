@@ -34,6 +34,7 @@ class DebugSession extends Application
         ; response.body["supportsEvaluateForHovers"] := "true"
         ; response.body["supportsDataBreakpoints"] := "true"
         ; response.body["supportsBreakpointLocationsRequest"] := "true"
+        response.body["supportsSetVariable"] := "true"
         response.body["supportsClipboardContext"] := "true"
 
         InitializedEvent := {"type": "event", "event": "initialized"}
@@ -139,6 +140,23 @@ class DebugSession extends Application
         ; body
         response["body"] := {}
         response.body["breakpoints"] := actualBreakpoints
+
+        return [response]
+    }
+
+    setVariableRequest(response, env)
+    {
+        frameId := this._variableHandles.get(env.arguments.variablesReference)[2]
+        try
+            variable := this._runtime.SetVariable(env.arguments.name, frameId, env.arguments.value)
+        catch err
+        {
+            response["body"] := {"error": CreateMessage(-1, err.Message . err.Extra)}
+            return this.errorResponse(response, env)
+        }
+        response["body"] := {}
+        response.body["value"] := variable.value
+        , response.body["type"] := variable.type
 
         return [response]
     }

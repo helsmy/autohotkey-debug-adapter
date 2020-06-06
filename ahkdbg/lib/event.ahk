@@ -42,3 +42,20 @@ CreateBreakpoint(verified, id := "", line := "", column := "", source := "")
 		breakpoint["source"] := source
 	return breakpoint
 }
+
+CreateMessage(id, format, variables := "", sendTelemetry := "", showUser := "true", url := "", urlLabel := "")
+{
+	; Message is shown by default
+	Message := {"id": id, "format": format}
+	if variables
+		Message["variables"] := variables
+	if sendTelemetry == ""
+		Message["sendTelemetry"] := sendTelemetry
+	if showUser == ""
+		Message["showUser"] := showUser
+	if url
+		Message["url"] := url
+	if urlLabel
+		Message["urlLabel"] := urlLabel
+	return Message
+}
