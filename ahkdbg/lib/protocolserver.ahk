@@ -145,11 +145,21 @@ class RequestHandler
 			logger("DA -> VSC event: " responseStr)
 		else
 			logger("DA -> VSC Response: " responseStr)
-		responseStr := "Content-Length: " . StrLen(responseStr) . "`r`n`r`n" . responseStr
+		responseStr := "Content-Length: " . (StrPut(responseStr, "utf-8")-1) . "`r`n`r`n" . responseStr
 
 		this.outStream.Write(responseStr)
 		this.seq++
 	}
+}
+
+StrLenBit(string, ByRef var, encoding)
+{
+    ; 确定容量.
+    VarSetCapacity( var, StrPut(string, encoding)
+        ; StrPut 返回字符数, 但 VarSetCapacity 需要字节数.
+        * ((encoding="utf-16"||encoding="cp1200") ? 2 : 1) )
+    ; 复制或转换字符串.
+    return StrPut(string, &var, encoding)
 }
 
 MakeServer(server_address, application)
