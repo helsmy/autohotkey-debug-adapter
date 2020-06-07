@@ -13,11 +13,6 @@ class StdIO
 		; return r
 	}
 
-	RawRead(ByRef Var, Bytes)
-	{
-		this.inStream.RawRead(Var, Bytes)
-	}
-
 	Write(text)
 	{
 		; Some problem in call write method of outStream

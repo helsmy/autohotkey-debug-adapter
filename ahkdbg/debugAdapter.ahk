@@ -8,7 +8,6 @@ SetWorkingDir %A_ScriptDir%
 #Include %A_ScriptDir%
 #Include ./AHKDebug.ahk
 
-FileEncoding, utf-8-RAW
 IOStream := new StdIO
 isdebug := false
 
