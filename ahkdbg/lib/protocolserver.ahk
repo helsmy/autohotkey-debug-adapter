@@ -24,18 +24,16 @@ class ProtocolServer
 		{
 			r := this.inStream.Read()
 			; Send request to EventDispatcher
+			; hacking way only fit to stdio
 			if r
 			{
-				loop
+				; MsgBox, %r%
+				l_requests := StrSplit(r, "Content-Length:"), l_requests.RemoveAt(1)
+				for _, request in l_requests
 				{
-					r := StrSplit(r, "`r`n`r`n",, 2)
-					h := r[1], r := r[2]
-					; Get length of request
-					length := SubStr(h, 17)
-					rs := SubStr(r, 1, length)
-					EventDispatcher.Put(HOR, rs)
-					r := SubStr(r, length+1)
-				} until StrLen(r) == 0
+					request := StrSplit(request, "`r`n`r`n")[2]
+					EventDispatcher.Put(HOR, request)
+				}
 			}
 		}
 	}
