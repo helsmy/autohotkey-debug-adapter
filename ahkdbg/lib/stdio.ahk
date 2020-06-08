@@ -6,11 +6,16 @@ class StdIO
 		; this.outStream := FileOpen("*", "w", "utf-8")
 	}
 
-	Read()
+	Read(count := 0)
 	{
 		return this.inStream.Read()
 		; FileRead, r, *
 		; return r
+	}
+
+	ReadLine()
+	{
+		return this.inStream.ReadLine()
 	}
 
 	RawRead(ByRef Var, Bytes)
