@@ -25,15 +25,19 @@ class ProtocolServer
 			r := this.inStream.Read()
 			; Send request to EventDispatcher
 			; hacking way only fit to stdio
-			if r
+			while (r)
 			{
-				; MsgBox, %r%
-				l_requests := StrSplit(r, "Content-Length:"), l_requests.RemoveAt(1)
-				for _, request in l_requests
-				{
-					request := StrSplit(request, "`r`n`r`n")[2]
-					EventDispatcher.Put(HOR, request)
-				}
+				header := StrSplit(r, "`r`n`r`n",,2)
+				r := header[2]
+				header := header[1]
+				req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
+				cap := StrPut(r, "utf-8")
+				VarSetCapacity(buffer, cap)
+				StrPut(r, &buffer, cap, "utf-8")
+				req := StrGet(&buffer, req_l+0, "utf-8")
+				; Send request to EventDispatcher
+				if (!!req)
+					EventDispatcher.Put(HOR, req)
 			}
 		}
 	}
