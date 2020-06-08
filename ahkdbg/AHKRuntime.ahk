@@ -363,11 +363,25 @@ class AHKRunTime
 
 	SetVariable(varFullName, frameId, value)
 	{	
+		type := this.GetValueType(value)
+		if (type == "integer")
+			value := trim(value) & -1
+		else if (type == "string")
+		{
+			value := SubStr(value, 2, -1)
+			value := StrReplace(value, """""", """")
+			value := StrReplace(value, "``r", "`r")
+			value := StrReplace(value, "``t", "`t")
+			value := StrReplace(value, "``n", "`n")
+			value := StrReplace(value, "````", "``")
+		}
+		else if (type == "mark")
+			type := "string"
 		if (frameId != "None")
-			cmd := "-n " varFullName " -d " frameId " -- "
+			cmd := "-n " varFullName " -d " frameId " -t " type " -- "
 		else
 		; context id of a global variable is 1
-			cmd := "-c 1 -n " varFullName " -- "
+			cmd := "-c 1 -n " varFullName " -t " type " -- "
 
 		this.Dbg_Session.property_set(cmd . DBGp_Base64UTF8Encode(value), Dbg_Response)
 		if !InStr(Dbg_Response, "success=""1""")
@@ -443,6 +457,17 @@ class AHKRunTime
 	SendEvent(event)
 	{
 		EventDispatcher.EmitImmediately("sendEvent", event)
+	}
+
+	GetValueType(v)
+	{
+		if SubStr(v, 1, 1) == """" && SubStr(v, StrLen(v)) == """"
+			return "string"
+		if v is integer
+			return "integer"
+		if v is Float
+			return "float"
+		return "mark"
 	}
 
 	__Delete()

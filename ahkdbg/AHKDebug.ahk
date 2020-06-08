@@ -189,7 +189,7 @@ class DebugSession extends Application
 		stackFrames := []
 		Loop % stack.where.Length()
 		{
-			source := {"name": this.GetBaseFile(stack.file[A_Index]), "path":StrReplace(stack.file[A_Index], "\", "/"), "sourceReference": 0+0, "adapterData": "mockdata"}
+			source := {"name": this.GetBaseFile(stack.file[A_Index]), "path": stack.file[A_Index], "sourceReference": 0+0, "adapterData": "mockdata"}
 			stackFrames.Push({"id": stack.level[A_Index]+0, "name": stack.where[A_Index], "line": stack.line[A_Index]+0, "source": source, "column": 0}) ;
 			; MsgBox, % fsarr().print(source)
 		}
