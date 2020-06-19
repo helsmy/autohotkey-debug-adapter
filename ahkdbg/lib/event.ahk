@@ -28,7 +28,7 @@ CreateOutputEvent(category, output)
 	return {"type": "event", "event": "output", "body": {"category": category, "output": output "`n"}}
 }
 
-CreateBreakpoint(verified, id := "", line := "", column := "", source := "")
+CreateBreakpoint(verified, id := "", line := "", column := "", source := "", message := "")
 {
 	breakpoint := {}
 	breakpoint["verified"] := verified
@@ -40,6 +40,8 @@ CreateBreakpoint(verified, id := "", line := "", column := "", source := "")
 		breakpoint["column"] := column+0
 	if source
 		breakpoint["source"] := source
+	if message
+		breakpoint["message"] := message
 	return breakpoint
 }
 

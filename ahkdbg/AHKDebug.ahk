@@ -32,7 +32,8 @@ class DebugSession extends Application
         response["body"] := {}
         response.body["supportsConfigurationDoneRequest"] := "true"
         ; response.body["supportsEvaluateForHovers"] := "true"
-        ; response.body["supportsDataBreakpoints"] := "true"
+        ; response.body["supportsFunctionBreakpoints"] := "true"
+        response.body["supportsHitConditionalBreakpoints"] := "true"
         ; response.body["supportsBreakpointLocationsRequest"] := "true"
         response.body["supportsSetVariable"] := "true"
         response.body["supportsClipboardContext"] := "true"
@@ -73,7 +74,7 @@ class DebugSession extends Application
         {
             CTO := ObjBindMethod(this, "CheckTimeOut")
             SetTimer, % CTO, -1000
-            Sleep, 25
+            ; Sleep, 25
             server := env.server
             seq := env.seq
 
@@ -107,19 +108,24 @@ class DebugSession extends Application
     setBreakpointsRequest(response, env)
     {
         path := env.arguments.source.path
-        clientLines := env.arguments.breakpoints
+        l_bkinfo := env.arguments.breakpoints
 
         ; clear all breakpoints for this file
         this._runtime.clearBreakpoints(path)
 
         ; set and verify breakpoint locations
         actualBreakpoints := []
-        for _, line  in clientLines
+        for _, bkinfo  in l_bkinfo
         {
-			; Why no Exception about wrong parameter?
-            bkp := this._runtime.SetBreakpoint(path, line.line)
-            ; Fuck Weakly Typed!
-            actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, 0, bkp.source))
+            try
+            {
+                ; Why no Exception about wrong parameter?
+                bkp := this._runtime.SetBreakpoint(path, bkinfo)
+                ; Fuck Weakly Typed!
+                actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, 0, bkp.source))
+            }
+            catch err
+                actualBreakpoints.Push(CreateBreakpoint("false",, bkinfo.line+0, 0, path, err.Extra))
         }
         this._runtime.VerifyBreakpoints()
         ; body
