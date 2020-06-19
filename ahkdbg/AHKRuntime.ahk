@@ -4,6 +4,27 @@
 
 class AHKRunTime
 {
+	static errorCodeToInfo := {1 :"parse error in command"
+							, 2 :"duplicate arguments in command"
+							, 3 :"invalid options"
+							, 4 :"Unimplemented command"
+							, 5 :"Command not available"
+							, 100 :"can not open file"
+							, 101 :"stream redirect failed"
+							, 200 :"breakpoint could not be set"
+							, 201 :"breakpoint type not supported"
+							, 202 :"invalid breakpoint"
+							, 203 :"no code on breakpoint line"
+							, 204 :"Invalid breakpoint state"
+							, 205 :"No such breakpoint"
+							, 206 :"Error evaluating code"
+							, 207 :"Invalid expression"
+							, 300 :"Can not get property"
+							, 301 :"Stack depth invalid"
+							, 302 :"Context invalid"
+							, 900 :"Encoding not supported"
+							, 998 :"An internal exception in the debugger occurred"
+							, 999 :"Unknown error"}
 	__New()
 	{
 		this.dbgAddr := "127.0.0.1"
@@ -27,6 +48,7 @@ class AHKRunTime
 		DBGp_OnBreak(ObjBindMethod(this, "OnDebuggerBreak"))
 		DBGp_OnStream(ObjBindMethod(this, "OnDebuggerStream"))
 		DBGp_OnEnd(ObjBindMethod(this, "OnDebuggerDisconnection"))
+		; DBGp_OnAccept(ObjBindMethod(this, "OnDebuggerAccept"))
 		this.clientArgs := clientArgs
 		; DebuggerInit
 	}
@@ -56,6 +78,7 @@ class AHKRunTime
 			Sleep, 100 ; avoid smashing the CPU
 		DBGp_StopListening(this.Dbg_Socket) ; stop accepting script connection
 		this.isStart := true
+		; Pause
 	}
 
 	GetPath()
@@ -162,6 +185,14 @@ class AHKRunTime
 		return 1 ; success
 	}
 
+	; fired when we accept a connection socket.
+	OnDebuggerAccept()
+	{
+		; only debug one script at one time
+		; MsgBox, Call OnAccept
+		DBGp_StopListening(this.Dbg_Session)
+	}
+
 	; OnDebuggerConnection() - fired when we receive a connection.
 	OnDebuggerConnection(session, init)
 	{
@@ -187,8 +218,6 @@ class AHKRunTime
 	; OnDebuggerBreak() - fired when we receive an asynchronous response from the debugger (including break responses).
 	OnDebuggerBreak(session, ByRef response)
 	{
-		global Dbg_OnBreak, Dbg_Stack, Dbg_LocalContext, Dbg_GlobalContext, Dbg_VarWin, bInBkProcess, _tempResponse
-
 		if this.bInBkProcess
 		{
 			; A breakpoint was hit while the script running and the SciTE OnMessage thread is
@@ -198,14 +227,24 @@ class AHKRunTime
 			EventDispatcher.PutDelay(ODB, [session, response])
 			return
 		}
-		response := response ? response : _tempResponse
+
 		dom := loadXML(response) ; load the XML document that the variable response is
 		status := dom.selectSingleNode("/response/@status").text ; get the status
+		; this.SendEvent(CreateOutputEvent("stdout", status))
 		if status = break
 		{ ; this is a break response
 			this.Dbg_OnBreak := true ; set the Dbg_OnBreak variable
 			; Get info about the script currently running
 			this.Dbg_GetStack()
+			; soft way to implement conditional breakpoint
+			; is it necessary to do this?
+			; ahk itself even do not support this
+			; though xdebug list it as one of core command ╮（﹀_﹀）╭
+			if (this.IsNeedConditionalContiune())
+			{
+				this.Continue()
+				return
+			}
 			; Check if we are stopped because of hitting a breakpoint
 			if this.stopForBreak
 				this.SendEvent(CreateStoppedEvent("breakpoint", DebugSession.THREAD_ID))
@@ -241,27 +280,27 @@ class AHKRunTime
 		uri := DBGp_EncodeFileURI(path)
 		for line, bk in this.Dbg_BkList[uri]
 			this.Dbg_Session.breakpoint_remove("-d " bk.id)
-		; MsgBox, % line " " fsarr().Print(bk)
 		this.Dbg_BkList[uri] := {}
-		; this.Dbg_Session.breakpoint_list(, Dbg_Response)
-		; MsgBox, % Dbg_Response " " fsarr().Print(this.Dbg_BkList)
 	}
 
-	; @line: 1 based lineno
-	SetBreakpoint(path, line)
-	{
+	; @bkinfo: breakpoint infomation (dict of SourceBreakpoint)
+	SetBreakpoint(path, bkinfo)
+	{	
 		uri := DBGp_EncodeFileURI(path)
 		bk := this.GetBk(uri, line)
 		if !this.isStart
 			return {"verified": "false", "line": line, "id": bk.id}
 		
+		; TODO: verify conditional breakpoint args 
 		this.bInBkProcess := true
-		this.Dbg_Session.breakpoint_set("-t line -n " line " -f " uri, Dbg_Response)
+		this.Dbg_Session.breakpoint_set("-t line -n " bkinfo.line "-f " uri, Dbg_Response)
 		If InStr(Dbg_Response, "<error") || !Dbg_Response ; Check if AutoHotkey actually inserted the breakpoint.
 		{
 			this.bInBkProcess := false
 			; TODO: return reason to frontend
-			return {"verified": "false", "line": line, "id": ""}
+			dom := loadXML(Dbg_Response)
+			errorCode := dom.selectSingleNode("/response/error/@code").text
+			throw Exception("Set Fail", -1, this.errorCodeToInfo[errorCode+0])
 		}
 
 		dom := loadXML(Dbg_Response)
@@ -272,10 +311,9 @@ class AHKRunTime
 		;remove 'file:///' in begin, make uri format some
 		sourceUri := SubStr(dom.selectSingleNode("/response/breakpoint[@id=" bkID "]/@filename").text, 9)
 		sourcePath := DBGp_DecodeFileURI(sourceUri)
-		this.AddBk(sourceUri, line, bkID)
+		this.AddBk(sourceUri, line, bkID, bkinfo)
 		this.bInBkProcess := false
-		; FIXME: debug
-		; this.SendEvent(CreateOutputEvent("stdout",  sourcePath " " path " " line))
+
 		return {"verified": "true", "line": line, "id": bkID, "source": sourcePath}
 	}
 
@@ -287,6 +325,35 @@ class AHKRunTime
 			for line, bk in uri
 				this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("true", bk.id, line, , sourcePath)))
 		}
+	}
+
+	IsNeedConditionalContiune()
+	{
+		stack := this.GetStack()
+		uri := DBGp_EncodeFileURI(stack.file[1]), line := stack.line[1]
+		bkinfo := this.GetBk(uri, line), condition := bkinfo.cond
+		if (condition.Count() > 1)
+		{
+			for cmd, param in condition
+			{
+				Switch cmd
+				{
+					Case "hitCondition":
+						hitCount := condition.hitCount ? condition.hitCount : 1
+						this.UpdataBk(uri, line, "hitCount", hitCount+1)
+						; this.sendEvent(CreateOutputEvent("stdout", hitCount))
+						if (hitCount != param)
+							return true
+						else
+						{
+							this.RemoveBk(uri, line)
+							return false
+						}
+				}
+			}
+		}
+
+		return false
 	}
 
 	InspectVariable(Dbg_VarName, frameId)
@@ -441,7 +508,12 @@ class AHKRunTime
 
 	AddBk(uri, line, id, cond := "")
 	{
-		this.Dbg_BkList[uri, line] := { "id": id, "cond": cond }
+		this.Dbg_BkList[uri, line] := { "id": id, "cond": cond}
+	}
+
+	UpdataBk(uri, line, prop, value)
+	{
+		this.Dbg_BkList[uri, line, "cond", prop] := value
 	}
 
 	GetBk(uri, line)
@@ -451,7 +523,10 @@ class AHKRunTime
 
 	RemoveBk(uri, line)
 	{
+		bkID := this.GetBk(uri, line)["id"]
+		this.Dbg_Session.breakpoint_update("-s disabled -d " bkID, Dbg_Response)
 		this.Dbg_BkList[uri].Delete(line)
+		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
 	}
 
 	SendEvent(event)

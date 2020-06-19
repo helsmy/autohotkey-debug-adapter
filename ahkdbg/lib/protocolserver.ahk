@@ -30,6 +30,7 @@ class ProtocolServer
 				header := StrSplit(r, "`r`n`r`n",,2)
 				r := header[2]
 				header := header[1]
+				; What a difficult thing to make sure converting is right in v1 OTZ
 				req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
 				cap := StrPut(r, "utf-8")
 				VarSetCapacity(buffer, cap)

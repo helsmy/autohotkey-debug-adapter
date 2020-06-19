@@ -19,6 +19,13 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 ![Debug](images/debugging.gif)
 
+### Rule of change varibles
+
+* Basically, it is the same grammar with ahk
+  * `quoted string`: such as "This is a quoted string."
+  * `number`: support int, float and hex
+  * `others`: any other string is treated like that it assign to a varible with `=` in AHKv1.
+
 ## Supported Settings of Launch.json
 
 * `type`: always ahkdbg.
@@ -41,8 +48,8 @@ An early version which needs test. Use it at you own risk.
 * [ ] Support Evaluate For Hovers
 * [x] Support debug console
 * [x] Change value of varible in debugging
-* [ ] Change value with type
 * [ ] conditional breakpoint
+* [ ] improve event queue
 
 ## Release Notes
 
@@ -94,4 +101,5 @@ Support redirecting standard io streams to debug console.
 
 1. change varibles in debugging
 2. utf-8 support
+3. support rewrite varibles with type
 

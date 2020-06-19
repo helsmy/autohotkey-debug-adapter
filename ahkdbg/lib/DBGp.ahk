@@ -38,7 +38,7 @@ class DBGp_Session
     Receive  := Func("DBGp_Receive")
     Close    := Func("DBGp_CloseSession")
 ;internal:
-    static OnBegin, OnBreak, OnStream, OnEnd
+    static OnBegin, OnBreak, OnStream, OnEnd, OnAccept
     static sockets := {}
     static callQueue := []
     responseQueue := []
@@ -116,6 +116,14 @@ DBGp_OnEnd(fn)
     ; Subject to change - do not use this property directly:
     DBGp_Session.OnEnd := fn ? new DBGp_Session.QueueHandler(fn) : ""
 }
+
+; Set the function to be called when a debuggee connection is accepted.
+DBGp_OnAccept(fn)
+{
+    ; Subject to change - do not use this property directly:
+    DBGp_Session.OnAccept := fn ? new DBGp_Session.QueueHandler(fn) : ""
+}
+
 
 ; Stops listening for debugger connections. Does not disconnect debuggers, but prevents more debuggers from connecting.
 DBGp_StopListening(socket)
@@ -344,6 +352,8 @@ DBGp_HandleWindowMessage(hwnd, uMsg, wParam, lParam)
         session.Socket := s
 
         DBGp_AddSession(session)
+        Pause, off
+        DBGp_CallHandler(DBGp_Session.OnAccept, session, "Onaccept")
     }
     else if (event = FD_READ) ; Receiving data.
     {
@@ -494,7 +504,11 @@ _DBGp_DispatchTimer()
 {
     ; Call exactly one handler per new thread.
     if next := DBGp_Session.callQueue.RemoveAt(1)
+    {
+        ; if (next[3] = "Onaccept")
+        ;     MsgBox, fire func
         fn := next[1], %fn%(next[2], next[3])
+    }
     ; If the queue is not empty, reset the timer.
     if DBGp_Session.callQueue.Length()
         SetTimer _DBGp_DispatchTimer, -1
