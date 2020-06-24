@@ -31,12 +31,13 @@ class DebugSession extends Application
         ; body
         response["body"] := {}
         response.body["supportsConfigurationDoneRequest"] := "true"
-        ; response.body["supportsEvaluateForHovers"] := "true"
-        ; response.body["supportsFunctionBreakpoints"] := "true"
-        response.body["supportsHitConditionalBreakpoints"] := "true"
-        ; response.body["supportsBreakpointLocationsRequest"] := "true"
         response.body["supportsSetVariable"] := "true"
         response.body["supportsClipboardContext"] := "true"
+        ; experimental features
+        ; response.body["supportsHitConditionalBreakpoints"] := "true"
+        ; response.body["supportsEvaluateForHovers"] := "true"
+        ; response.body["supportsFunctionBreakpoints"] := "true"
+        ; response.body["supportsBreakpointLocationsRequest"] := "true"
 
         InitializedEvent := {"type": "event", "event": "initialized"}
 		this._runtime.Init(env.arguments)

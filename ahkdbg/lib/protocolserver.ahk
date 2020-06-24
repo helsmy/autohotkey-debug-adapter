@@ -65,13 +65,14 @@ class ProtocolServer
 class EventDispatcher
 {
 	static eventQueue := []
+	static immediateQueue := []
 
 	Put(handler, data, immediate := false)
 	{
 		if !immediate
 			this.eventQueue.Push([handler, data])
 		else
-			this.eventQueue.InsertAt(2, [handler, data])
+			this.immediateQueue.Push([handler, data])
 		; Using a single timer ensures that each handler finishes before
 		; the next is called, and that each runs in its own thread.
 		static DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
@@ -81,6 +82,9 @@ class EventDispatcher
 	DispatchTimer()
 	{
 		static DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
+		; Clear immediateQueue array before fire handler of eventQueue
+		while (next := this.immediateQueue.RemoveAt(1))
+			fn := next[1], %fn%(next[2])
 		; Call exactly one handler per new thread.
 		if next := this.eventQueue.RemoveAt(1)
 			fn := next[1], %fn%(next[2])

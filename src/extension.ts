@@ -47,7 +47,7 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.program = '${file}';
 				config.stopOnEntry = true;
 				config.captureStreams = true;
-				config.AhkExecutable = ""; // Empty value to make da acquire executable path
+				config.AhkExecutable = ''; // Empty value to make da acquire executable path
 				config.port = 9005;
 				// config.log = false;
 			}
@@ -75,7 +75,7 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 		if (!executable) {
 			const command = "C:/Program Files/AutoHotkey/AutoHotkey.exe";
 			const args = [
-				"./ahkdbg/mockDebug.ahk"
+				"./ahkdbg/debugAdapter.ahk"
 			];
 			// no option needed
 			// const options = {};
