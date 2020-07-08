@@ -112,10 +112,11 @@ class DebugSession extends Application
         l_bkinfo := env.arguments.breakpoints
 
         ; clear all breakpoints for this file
-        this._runtime.clearBreakpoints(path)
+        ; this._runtime.clearBreakpoints(path)
 
         ; set and verify breakpoint locations
         actualBreakpoints := []
+        bkcheckdict := {}
         for _, bkinfo  in l_bkinfo
         {
             try
@@ -127,12 +128,17 @@ class DebugSession extends Application
             }
             catch err
                 actualBreakpoints.Push(CreateBreakpoint("false",, bkinfo.line+0, 0, path, err.Extra))
+            finally
+                bkcheckdict[bkinfo.line] := ""
         }
+
+        ; Remove unnecessary breakpoint
+        this._runtime.DeleteBreakpoint(path, bkcheckdict)
         this._runtime.VerifyBreakpoints()
         ; body
         response["body"] := {}
         response.body["breakpoints"] := actualBreakpoints
-        return [response]
+        return [response, CreateOutputEvent("stdout", fsarr().print(this._runtime.Dbg_BkList))]
     }
 
     setDataBreakpointsRequest(response, env)

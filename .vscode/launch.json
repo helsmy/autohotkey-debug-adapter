@@ -4,6 +4,16 @@
 		{
 			"type": "ahkdbg",
 			"request": "launch",
+			"name": "Debug AHK file",
+			"program": "${file}",
+			"stopOnEntry": false,
+			"captureStreams": true,
+			"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+			"port": 9005
+		},
+		{
+			"type": "ahkdbg",
+			"request": "launch",
 			"name": "Server",
 			"program": "${workspaceFolder}/ahkdbg/debugAdapter.ahk",
 			"stopOnEntry": false,
@@ -23,7 +33,7 @@
 				"${workspaceFolder}/out/**/*.js"
 			],
 			"preLaunchTask": "npm: watch"
-		},],
+		}],
 	"compounds": [
 		{
 			"name": "Extension + Server",

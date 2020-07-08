@@ -287,9 +287,17 @@ class AHKRunTime
 	SetBreakpoint(path, bkinfo)
 	{	
 		uri := DBGp_EncodeFileURI(path)
-		bk := this.GetBk(uri, line)
+		bk := this.GetBk(uri, bkinfo.line)
 		if !this.isStart
 			return {"verified": "false", "line": line, "id": bk.id}
+
+		; if breakpoint exists, update condition
+		if !!bk
+		{
+			for cond, val in bkinfo
+				this.Dbg_BkList[uri][line]["cond"][cond] := val
+			return {"verified": "true", "line": bkinfo.line, "id": bk.id, "source": path}
+		}
 		
 		; TODO: verify conditional breakpoint args 
 		this.bInBkProcess := true
@@ -317,6 +325,17 @@ class AHKRunTime
 		return {"verified": "true", "line": line, "id": bkID, "source": sourcePath}
 	}
 
+	DeleteBreakpoint(path, bkCheckDict)
+	{
+		uri := DBGp_EncodeFileURI(path)
+		
+		for line in this.Dbg_BkList[uri]
+		{
+			if !bkCheckDict.HasKey(line)
+				this.RemoveBk(uri, line)
+		}
+	}
+
 	VerifyBreakpoints()
 	{
 		for _, uri in this.Dbg_BkList
@@ -330,7 +349,7 @@ class AHKRunTime
 	IsNeedConditionalContiune()
 	{
 		stack := this.GetStack()
-		uri := DBGp_EncodeFileURI(stack.file[1]), line := stack.line[1]
+		uri := DBGp_EncodeFileURI(stack.file[1]), line := stack.line[1] & -1
 		bkinfo := this.GetBk(uri, line), condition := bkinfo.cond
 		if (condition.Count() > 1)
 		{
@@ -346,7 +365,7 @@ class AHKRunTime
 							return true
 						else
 						{
-							this.RemoveBk(uri, line)
+							this.DisableBk(uri, line)
 							return false
 						}
 				}
@@ -508,7 +527,10 @@ class AHKRunTime
 
 	AddBk(uri, line, id, cond := "")
 	{
-		this.Dbg_BkList[uri, line] := { "id": id, "cond": cond}
+		; BkList -- uri
+		;         └- line
+		;          └- id, cond(bkinfo) 
+		this.Dbg_BkList[uri, line+0] := { "id": id, "cond": cond}
 	}
 
 	UpdataBk(uri, line, prop, value)
@@ -518,15 +540,23 @@ class AHKRunTime
 
 	GetBk(uri, line)
 	{
-		return this.Dbg_BkList[uri, line]
+		return this.Dbg_BkList[uri, line+0]
+	}
+
+	DisableBk(uri, line)
+	{
+		bkID := this.GetBk(uri, line)["id"]
+		this.Dbg_Session.breakpoint_update("-s disabled -d " bkID, Dbg_Response)
+		; this.Dbg_BkList[uri].Delete(line)
+		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
 	}
 
 	RemoveBk(uri, line)
 	{
 		bkID := this.GetBk(uri, line)["id"]
-		this.Dbg_Session.breakpoint_update("-s disabled -d " bkID, Dbg_Response)
+		this.Dbg_Session.breakpoint_remove("-d " bkID, Dbg_Response)
 		this.Dbg_BkList[uri].Delete(line)
-		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
+		; this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
 	}
 
 	SendEvent(event)
