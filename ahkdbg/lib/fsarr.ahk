@@ -107,8 +107,16 @@ class __ClASS_AHKFS_ARRAY
 				ret .= "{"
 				for k,v in arr
 				{
+					switch fstype(k)
+					{
+						case "String":
+							ret .= """" . k . """" . ": "
+						default:
+							ret .= k ": "
+					}
+
 					if IsObject(v)
-						ret .= """" . k . """" . ": " . this.print(v) . ", "
+						ret .= this.print(v) . ", "
 					else if fstype(v) == "String"
 					{
 						v := StrReplace(v, "\" , "\\")
@@ -117,10 +125,10 @@ class __ClASS_AHKFS_ARRAY
 						v := StrReplace(v, """", "\""")
 						; k := StrReplace(k, """", "\""")
 						; logger("DA -> VSC Raw"": " v)
-						ret .= """" . k . """" . ": " . """" . v . """" . ", "
+						ret .= """" . v . """" . ", "
 					}
 					else
-						ret .= """" . k . """" . ": " . v . ", "
+						ret .= v . ", "
 				}
 				ret := (StrLen(ret)>1) ? SubStr(ret, 1, -2) : ret
 				ret .= "}"
