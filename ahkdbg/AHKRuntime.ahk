@@ -287,7 +287,7 @@ class AHKRunTime
 	SetBreakpoint(path, bkinfo)
 	{	
 		uri := DBGp_EncodeFileURI(path)
-		bk := this.GetBk(uri, bkinfo.line)
+		bk := this.GetBk(uri, bkinfo.line+0)
 		if !this.isStart
 			return {"verified": "false", "line": line, "id": bk.id}
 
@@ -295,7 +295,8 @@ class AHKRunTime
 		if !!bk
 		{
 			for cond, val in bkinfo
-				this.Dbg_BkList[uri][line]["cond"][cond] := val
+				bk["cond"][cond] := val
+			this.EnableBK(bk.id)
 			return {"verified": "true", "line": bkinfo.line, "id": bk.id, "source": path}
 		}
 		
@@ -531,6 +532,11 @@ class AHKRunTime
 		;         └- line
 		;          └- id, cond(bkinfo) 
 		this.Dbg_BkList[uri, line+0] := { "id": id, "cond": cond}
+	}
+
+	EnableBK(bkid)
+	{
+		this.Dbg_Session.breakpoint_update("-s enabled -d " bkID, Dbg_Response)
 	}
 
 	UpdataBk(uri, line, prop, value)
