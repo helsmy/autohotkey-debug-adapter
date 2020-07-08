@@ -48,8 +48,8 @@ An early version which needs test. Use it at you own risk.
 * [ ] Support Evaluate For Hovers
 * [x] Support debug console
 * [x] Change value of varible in debugging
-* [ ] conditional breakpoint
-* [ ] improve event queue
+* [ ] conditional breakpoint (experimental feature, soft implementation)
+* [x] improve event queue
 
 ## Release Notes
 
@@ -65,41 +65,33 @@ Support redirecting standard io streams to debug console.
 
 1. Fix bugs abort breakpoints.
 2. Support viewing variables in different stacks.
-
-### 0.1.1
-
-1. Fix display bugs.
+3. Fix display bugs.(0.1.1)
 
 ### 0.2.0
 
 1. Disconnect correctly(able to restart).
 2. Fix pause request.
-
-### 0.2.1
-
-1. Use inner ahk.
-2. Add config option AhkExecutable.
+3. Use inner ahk.(0.2.1)
+4. Add config option AhkExecutable.(0.2.1)
 
 ### 0.3.0
 
 1. Autodetect ahk executable.
 2. Fix stopped reason display.
-
-### 0.3.1
-
-1. Improve undefined variable display.
+3. Improve undefined variable display.(0.3.1)
 
 ### 0.4.0
 
 1. run without debug
-
-### 0.4.1
-
-1. fix breakpoints bugs in cross file
+2. fix breakpoints bugs in cross file(0.4.1)
 
 ### 0.5.0
 
 1. change varibles in debugging
 2. utf-8 support
 3. support rewrite varibles with type
+
+### 0.6.0
+
+1. improve event queue
 
