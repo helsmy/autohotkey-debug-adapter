@@ -34,7 +34,7 @@ class DebugSession extends Application
         response.body["supportsSetVariable"] := "true"
         response.body["supportsClipboardContext"] := "true"
         ; experimental features
-        ; response.body["supportsHitConditionalBreakpoints"] := "true"
+        response.body["supportsHitConditionalBreakpoints"] := "true"
         ; response.body["supportsEvaluateForHovers"] := "true"
         ; response.body["supportsFunctionBreakpoints"] := "true"
         ; response.body["supportsBreakpointLocationsRequest"] := "true"
@@ -217,7 +217,6 @@ class DebugSession extends Application
     }
 
     ; TODO: May long running, need async exec here
-    ; FIXME: UTF char cause wrong
     variablesRequest(response, env)
     {
         ; just return some constant value, for now

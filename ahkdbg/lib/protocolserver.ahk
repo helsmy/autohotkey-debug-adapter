@@ -37,6 +37,7 @@ class ProtocolServer
 				StrPut(r, &buffer, cap, "utf-8")
 				req := StrGet(&buffer, req_l+0, "utf-8")
 				; Send request to EventDispatcher
+				; FIXME: UTF-8 block dispatcher
 				if (!!req)
 					EventDispatcher.Put(HOR, req)
 			}
@@ -157,16 +158,6 @@ class RequestHandler
 		this.outStream.Write(responseStr)
 		this.seq++
 	}
-}
-
-StrLenBit(string, ByRef var, encoding)
-{
-    ; 确定容量.
-    VarSetCapacity( var, StrPut(string, encoding)
-        ; StrPut 返回字符数, 但 VarSetCapacity 需要字节数.
-        * ((encoding="utf-16"||encoding="cp1200") ? 2 : 1) )
-    ; 复制或转换字符串.
-    return StrPut(string, &var, encoding)
 }
 
 MakeServer(server_address, application)

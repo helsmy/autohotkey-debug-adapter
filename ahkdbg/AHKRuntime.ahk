@@ -297,7 +297,7 @@ class AHKRunTime
 		If InStr(Dbg_Response, "<error") || !Dbg_Response ; Check if AutoHotkey actually inserted the breakpoint.
 		{
 			this.bInBkProcess := false
-			; TODO: return reason to frontend
+			; return reason to frontend
 			dom := loadXML(Dbg_Response)
 			errorCode := dom.selectSingleNode("/response/error/@code").text
 			throw Exception("Set Fail", -1, this.errorCodeToInfo[errorCode+0])
