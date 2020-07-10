@@ -28,9 +28,12 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 ### Rule of change varibles
 
 * Basically, it is the same grammar with ahk
-  * `quoted string`: such as "This is a quoted string." => type "string"
-  * `number`: support int, float and hex. eg. `12`,`12.123`, `0xff` => type "integer"(12), "float"(12.123), "integer"(255) 
-  * `others`: any other string is treated like that it assign to a varible with `=` in AHKv1. => type "string"
+  * `quoted string`: such as "This is a quoted string."  
+     => type "string"
+  * `number`: support int, float and hex.   
+    eg. `12`,`12.123`, `0xff` => type "integer"(12), "float"(12.123), "integer"(255) 
+  * `others`: any other string is treated like that it assign to a varible with `=` in AHKv1.  
+    => type "string"
 
 ## Supported Settings of Launch.json
 
@@ -58,49 +61,3 @@ An early version which needs test. Use it at you own risk.
 * [ ] conditional breakpoint (experimental feature, soft implementation)
   * [x] hitCondition
 * [x] improve event queue
-
-## Release Notes
-
-### 0.0.3
-
-Fix display bug in object
-
-### 0.0.5
-
-Support redirecting standard io streams to debug console.
-
-### 0.1.0
-
-1. Fix bugs abort breakpoints.
-2. Support viewing variables in different stacks.
-3. Fix display bugs.(0.1.1)
-
-### 0.2.0
-
-1. Disconnect correctly(able to restart).
-2. Fix pause request.
-3. Use inner ahk.(0.2.1)
-4. Add config option AhkExecutable.(0.2.1)
-
-### 0.3.0
-
-1. Autodetect ahk executable.
-2. Fix stopped reason display.
-3. Improve undefined variable display.(0.3.1)
-
-### 0.4.0
-
-1. run without debug
-2. fix breakpoints bugs in cross file(0.4.1)
-
-### 0.5.0
-
-1. change varibles in debugging
-2. utf-8 support
-3. support rewrite varibles with type
-
-### 0.6.0
-
-1. improve event queue
-2. conditional breakpoint(experimental) (0.6.1)
-

@@ -138,7 +138,7 @@ class DebugSession extends Application
         ; body
         response["body"] := {}
         response.body["breakpoints"] := actualBreakpoints
-        return [response, CreateOutputEvent("stdout", fsarr().print(this._runtime.Dbg_BkList))]
+        return [response]
     }
 
     setDataBreakpointsRequest(response, env)
