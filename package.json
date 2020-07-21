@@ -2,7 +2,7 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adapter for AutoHotKey.",
-	"version": "0.6.1",
+	"version": "0.6.3",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"

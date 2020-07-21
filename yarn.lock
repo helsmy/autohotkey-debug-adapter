@@ -803,7 +803,7 @@ yargs-unparser@1.6.0:
   integrity sha1-7yXCx2n/a9CeSw+dfGBfsnhG6p8=
   dependencies:
     flat "^4.1.0"
-    lodash "^4.17.15"
+    lodash "^4.17.19"
     yargs "^13.3.0"
 
 yargs@13.3.2, yargs@^13.3.0:
