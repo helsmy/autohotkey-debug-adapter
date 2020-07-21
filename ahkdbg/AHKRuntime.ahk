@@ -424,7 +424,7 @@ class AHKRunTime
 		type := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@type"))
 		facet := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@facet"))
 
-		return {"name": name, "value": value, "type": type, "facet": facet}
+		return {"name": name, "fullName": name, "value": value, "type": type, "facet": facet}
 	}
 
 	InspectObject(ByRef objdom)
@@ -432,20 +432,20 @@ class AHKRunTime
 		root := objdom.selectSingleNode("/response/property/@name").text
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
 		
-		name := [], value := [], type := []
+		name := [], value := [], type := [], fullName := []
 		
 		Loop % propertyNodes.length
 		{
 			node := propertyNodes.item[A_Index-1]
 			nodeName := node.attributes.getNamedItem("name").text
 			needToLoadChildren := node.attributes.getNamedItem("children").text
-			fullName := node.attributes.getNamedItem("fullname").text
+			nodeFullName := node.attributes.getNamedItem("fullname").text
 			nodeType := node.attributes.getNamedItem("type").text
 			nodeValue := DBGp_Base64UTF8Decode(node.text)
-			name.Push(fullName), type.Push(nodeType), value.Push(nodeValue)
+			name.Push(nodeName), type.Push(nodeType), value.Push(nodeValue), fullName.Push(nodeFullName)
 		}
 		; TODO: better display name
-		return {"name": name, "value": value, "type": type}
+		return {"name": name, "fullName": fullName, "value": value, "type": type}
 	}
 
 	SetVariable(varFullName, frameId, value)

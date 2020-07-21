@@ -242,7 +242,7 @@ class DebugSession extends Application
                                ,"value": variablesRaw.type[A_Index] == "undefined" ? "<undefined>" : variablesRaw.value[A_Index]
                                ,"variablesReference"
 							   : variablesRaw.type[A_Index] == "object" 
-                               ? this._variableHandles.create([variablesRaw.name[A_Index], id[2]])+0 : 0})
+                               ? this._variableHandles.create([variablesRaw.fullName[A_Index], id[2]])+0 : 0})
                                ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
                 if variablesRaw.facet == "Builtin"
                     variables[A_Index]["presentationHint"] := {"attributes": ["constant", "readOnly"]}

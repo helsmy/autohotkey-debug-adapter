@@ -42,4 +42,5 @@ Support redirecting standard io streams to debug console.
 
 1. improve event queue
 2. conditional breakpoint(experimental) (0.6.1)
+3. improve display (0.6.3)
 
