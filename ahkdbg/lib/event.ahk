@@ -51,9 +51,9 @@ CreateMessage(id, format, variables := "", sendTelemetry := "", showUser := "tru
 	Message := {"id": id, "format": format}
 	if variables
 		Message["variables"] := variables
-	if sendTelemetry == ""
+	if sendTelemetry != ""
 		Message["sendTelemetry"] := sendTelemetry
-	if showUser == ""
+	if showUser != ""
 		Message["showUser"] := showUser
 	if url
 		Message["url"] := url

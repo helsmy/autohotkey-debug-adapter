@@ -9,6 +9,7 @@ vsc-extension-quickstart.md
 .DS_Store
 yarn-error.log
 src/test
+ahkdbg/test
 
 #log
 ahkdbg.log

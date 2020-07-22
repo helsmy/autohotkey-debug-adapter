@@ -123,21 +123,23 @@ class DebugSession extends Application
             {
                 ; Why no Exception about wrong parameter?
                 bkp := this._runtime.SetBreakpoint(path, bkinfo)
+                source := {"name": this.GetBaseFile(bkp.source), "path": bkp.source, "sourceReference": 0+0}
                 ; Fuck Weakly Typed!
-                actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, 0, bkp.source))
+                actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, , source)) ;
             }
             catch err
                 actualBreakpoints.Push(CreateBreakpoint("false",, bkinfo.line+0, 0, path, err.Extra))
             finally
-                bkcheckdict[bkinfo.line] := ""
+                bkcheckdict[bkp.line] := ""
         }
 
         ; Remove unnecessary breakpoint
         this._runtime.DeleteBreakpoint(path, bkcheckdict)
-        this._runtime.VerifyBreakpoints()
+        this._runtime.VerifyBreakpoints(path)
         ; body
         response["body"] := {}
         response.body["breakpoints"] := actualBreakpoints
+        ; response.body["breakpoints"] := []
         return [response]
     }
 

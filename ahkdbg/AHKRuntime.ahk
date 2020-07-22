@@ -135,7 +135,7 @@ class AHKRunTime
 
 	StartRun(stopOnEntry := false)
 	{
-		this.VerifyBreakpoints()
+		; this.VerifyBreakpoints()
 		if stopOnEntry
 		{
 			this.StepIn()
@@ -322,29 +322,35 @@ class AHKRunTime
 		sourcePath := DBGp_DecodeFileURI(sourceUri)
 		this.AddBk(sourceUri, line, bkID, bkinfo)
 		this.bInBkProcess := false
-
+		
 		return {"verified": "true", "line": line, "id": bkID, "source": sourcePath}
 	}
 
 	DeleteBreakpoint(path, bkCheckDict)
 	{
 		uri := DBGp_EncodeFileURI(path)
+		try 
+			bkinfo := fsarr().cpy(this.Dbg_BkList[uri])
+		catch error
+			return
 		
-		for line in this.Dbg_BkList[uri]
+		; what a weird bug
+		; delete a key-val pair
+		; skip a key-val pair
+		; papapa! good job, ahk! OTZ
+		for line in bkinfo
 		{
 			if !bkCheckDict.HasKey(line)
 				this.RemoveBk(uri, line)
 		}
 	}
 
-	VerifyBreakpoints()
+	VerifyBreakpoints(path)
 	{
-		for _, uri in this.Dbg_BkList
-		{
-			sourcePath := DBGp_DecodeFileURI(uri)
-			for line, bk in uri
-				this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("true", bk.id, line, , sourcePath)))
-		}
+		uri := DBGp_EncodeFileURI(path)
+		
+		for line, bk in this.Dbg_BkList[uri]
+			this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("true", bk.id, line, , path)))
 	}
 
 	IsNeedConditionalContiune()
@@ -430,21 +436,37 @@ class AHKRunTime
 	InspectObject(ByRef objdom)
 	{
 		root := objdom.selectSingleNode("/response/property/@name").text
+		; this.sendEvent(CreateOutputEvent("stdout", root))
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
 		
 		name := [], value := [], type := [], fullName := []
 		
+		; FIXME: Inspect fail when dict key is number string
 		Loop % propertyNodes.length
 		{
 			node := propertyNodes.item[A_Index-1]
 			nodeName := node.attributes.getNamedItem("name").text
 			needToLoadChildren := node.attributes.getNamedItem("children").text
+			; Fuck! bug due to ahk itself
 			nodeFullName := node.attributes.getNamedItem("fullname").text
+			fixedFullName := ""
+			for _, objKey in StrSplit(nodeFullName, ".")
+			{
+				if objKey is number
+				{
+					objKey := "[""" objKey """]"
+					fixedFullName .= objKey
+				}
+				else
+					fixedFullName .= "." objKey
+			}
+			nodeFullName := SubStr(fixedFullName, 2) 
+			; this.sendEvent(CreateOutputEvent("stdout", nodeFullName))
 			nodeType := node.attributes.getNamedItem("type").text
 			nodeValue := DBGp_Base64UTF8Decode(node.text)
 			name.Push(nodeName), type.Push(nodeType), value.Push(nodeValue), fullName.Push(nodeFullName)
 		}
-		; TODO: better display name
+
 		return {"name": name, "fullName": fullName, "value": value, "type": type}
 	}
 
@@ -559,10 +581,11 @@ class AHKRunTime
 
 	RemoveBk(uri, line)
 	{
+		; this.SendEvent(CreateOutputEvent("stdout", "remove: " line))
 		bkID := this.GetBk(uri, line)["id"]
 		this.Dbg_Session.breakpoint_remove("-d " bkID, Dbg_Response)
 		this.Dbg_BkList[uri].Delete(line)
-		; this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
+		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
 	}
 
 	SendEvent(event)
