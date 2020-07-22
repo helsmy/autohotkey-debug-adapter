@@ -51,7 +51,7 @@ class __ClASS_AHKFS_ARRAY
 					ret[k] := v
 				}
 			Default:
-				Throw Exception("Invaild Value! Need an array, but pass a(n) " . fstype(arr), -1)
+				Throw Exception("Invaild Value! Need an array, but pass a(n) " . fstype(arr), -1, arr)
 		}
 		return ret
 	}

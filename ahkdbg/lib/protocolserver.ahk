@@ -84,13 +84,13 @@ class EventDispatcher
 	{
 		static DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
 		; Clear immediateQueue array before fire handler of eventQueue
-		while (next := this.immediateQueue.RemoveAt(1))
+		if (next := this.immediateQueue.RemoveAt(1))
 			fn := next[1], %fn%(next[2])
 		; Call exactly one handler per new thread.
-		if next := this.eventQueue.RemoveAt(1)
+		else if next := this.eventQueue.RemoveAt(1)
 			fn := next[1], %fn%(next[2])
 		; If the queue is not empty, reset the timer.
-		if this.eventQueue.Length()
+		if (this.eventQueue.Length() || this.immediateQueue.Length())
 			SetTimer, % DT, -1
 	}
 
