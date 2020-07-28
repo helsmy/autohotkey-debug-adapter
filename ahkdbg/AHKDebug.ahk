@@ -63,10 +63,15 @@ class DebugSession extends Application
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
             this._runtime.dbgPort := env.arguments.port
             noDebug := (env.arguments.noDebug == "true") ? true : false
-            if noDebug
-                env.server.keepRun := false ; Stop server, not a good solution for running without debug
 			this._runtime.Start(env.arguments.program, noDebug)
-			this.isStart := true
+            if noDebug
+            {
+                ; env.server.keepRun := false ; Stop server, not a good solution for running without debug
+                ; return
+                this.isStart := false
+            }
+            else
+                this.isStart := true
 		}
 
         ; wait until configuration has finished (and configurationDoneRequest has been called)
@@ -268,28 +273,28 @@ class DebugSession extends Application
     {
 		this._variableHandles.Reset()
         this._runtime.Next()
-        return [response, CreateStoppedEvent("step", DebugSession.THREAD_ID)]
+        return [response]
     }
 
     stepInRequest(response, env)
     {
 		this._variableHandles.Reset()
         this._runtime.StepIn()
-        return [response, CreateStoppedEvent("step", DebugSession.THREAD_ID)]
+        return [response]
     }
 
     stepOutRequest(response, env)
     {
 		this._variableHandles.Reset()
         this._runtime.StepOut()
-        return [response, CreateStoppedEvent("step", DebugSession.THREAD_ID)]
+        return [response]
     }
 
 	pauseRequest(response, env)
 	{
 		this._variableHandles.Reset()
 		this._runtime.Pause()
-		return [response, CreateStoppedEvent("pause", DebugSession.THREAD_ID)]
+		return [response]
 	}
 
     disconnectRequest(response, env)
