@@ -38,7 +38,7 @@ class AHKRunTime
 		this.dbgMaxChildren := 10+0
 		this.currline := 0
 		this.isStart := false
-		this.stopForBreak := true
+		this.stoppedReason := "breakpoint"
 	}
 
 	Init(clientArgs)
@@ -103,7 +103,7 @@ class AHKRunTime
 		ErrorLevel = 0
 		this.Dbg_OnBreak := false
 		this.Dbg_HasStarted := true
-		this.stopForBreak := false
+		this.stoppedReason := "step"
 		this.Dbg_Session.step_into()
 	}
 
@@ -112,7 +112,7 @@ class AHKRunTime
 		ErrorLevel = 0
 		this.Dbg_OnBreak := false
 		this.Dbg_HasStarted := true
-		this.stopForBreak := false
+		this.stoppedReason := "step"
 		this.Dbg_Session.step_over()
 	}
 
@@ -121,7 +121,7 @@ class AHKRunTime
 		ErrorLevel = 0
 		this.Dbg_OnBreak := false
 		this.Dbg_HasStarted := true
-		this.stopForBreak := false
+		this.stoppedReason := "step"
 		this.Dbg_Session.step_out()
 	}
 
@@ -148,7 +148,7 @@ class AHKRunTime
 
 	Pause()
 	{
-		this.stopForBreak := false
+		this.stoppedReason := "pause"
 		this.Dbg_Session.Send("break", "", Func("DummyCallback"))
 	}
 
@@ -245,10 +245,9 @@ class AHKRunTime
 				this.Continue()
 				return
 			}
-			; Check if we are stopped because of hitting a breakpoint
-			if this.stopForBreak
-				this.SendEvent(CreateStoppedEvent("breakpoint", DebugSession.THREAD_ID))
-			this.stopForBreak := true
+
+			this.SendEvent(CreateStoppedEvent(this.stoppedReason, DebugSession.THREAD_ID))
+			this.stoppedReason := "breakpoint"
 		}
 	}
 
@@ -441,7 +440,6 @@ class AHKRunTime
 		
 		name := [], value := [], type := [], fullName := []
 		
-		; FIXME: Inspect fail when dict key is number string
 		Loop % propertyNodes.length
 		{
 			node := propertyNodes.item[A_Index-1]
