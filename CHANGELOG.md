@@ -45,4 +45,5 @@ Support redirecting standard io streams to debug console.
 3. improve display (0.6.3)
 4. fix bugs
 5. fix bug about that debugee forever stopped when debugger stepin at return of hotkey (0.6.5)
+6. global error catch and fix bug about run without debug (0.6.7)
 

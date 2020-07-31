@@ -19,4 +19,11 @@ app := module.BuildApp()
 DAd := MakeServer(SERVER_ADDRESS, app)
 ; Register send event handler
 EventDispatcher.On("sendEvent", ObjBindMethod(DAd, "HandleEvent"))
+OnError("GlobalErrorHandler")
 DAd.ServeForever()
+
+GlobalErrorHandler(exception)
+{
+    EventDispatcher.EmitImmediately("sendEvent", CreateOutputEvent("stdout", "Debug Adapter Error:" exception.Message))
+    EventDispatcher.EmitImmediately("sendEvent", CreateTerminatedEvent())
+}

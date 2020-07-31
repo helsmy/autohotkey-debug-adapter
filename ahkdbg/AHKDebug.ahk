@@ -63,12 +63,18 @@ class DebugSession extends Application
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
             this._runtime.dbgPort := env.arguments.port
             noDebug := (env.arguments.noDebug == "true") ? true : false
-			this._runtime.Start(env.arguments.program, noDebug)
+            try
+                this._runtime.Start(env.arguments.program, noDebug)
+            catch e
+            {
+                response["body"] := {"error": CreateMessage(-1,env.arguments.program " launch fail`n" e.Message "`nExtra:" e.Extra)}
+                return this.errorResponse(response, env)
+            }
             if noDebug
             {
-                ; env.server.keepRun := false ; Stop server, not a good solution for running without debug
-                ; return
+                env.server.keepRun := false ; Stop server, not a good solution for running without debug
                 this.isStart := false
+                return [response]
             }
             else
                 this.isStart := true

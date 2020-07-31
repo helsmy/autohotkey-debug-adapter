@@ -73,7 +73,7 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 
 		// use the executable specified in the package.json if it exists or determine it based on some other information (e.g. the session)
 		if (!executable) {
-			const command = "C:/Program Files/AutoHotkey/AutoHotkey.exe";
+			const command = "./bin/AutoHotkey.exe";
 			const args = [
 				"./ahkdbg/debugAdapter.ahk"
 			];
