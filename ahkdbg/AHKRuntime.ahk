@@ -78,6 +78,8 @@ class AHKRunTime
 			Sleep, 100 ; avoid smashing the CPU
 		DBGp_StopListening(this.Dbg_Socket) ; stop accepting script connection
 		this.isStart := true
+		if this.Dbg_Lang != "AutoHotkey"
+			throw Exception("invaild language.", -1, this.Dbg_Lang)
 		; Pause
 	}
 
