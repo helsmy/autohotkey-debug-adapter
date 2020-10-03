@@ -209,8 +209,8 @@ class AHKRunTime
 		this.SetEnableChildren(false)
 		if this.dbgCaptureStreams
 		{
-			session.stdout("-c 2")
-			session.stderr("-c 2")
+			session.stdout("-c 1")
+			session.stderr("-c 1")
 		}
 		session.feature_get("-n supports_async", response)
 		this.bIsAsync := !!InStr(response, ">1<")
@@ -303,7 +303,7 @@ class AHKRunTime
 		
 		; TODO: verify conditional breakpoint args 
 		this.bInBkProcess := true
-		this.Dbg_Session.breakpoint_set("-t line -n " bkinfo.line "-f " uri, Dbg_Response)
+		this.Dbg_Session.breakpoint_set("-t line -n " bkinfo.line " -f " uri, Dbg_Response)
 		If InStr(Dbg_Response, "<error") || !Dbg_Response ; Check if AutoHotkey actually inserted the breakpoint.
 		{
 			this.bInBkProcess := false
@@ -323,7 +323,7 @@ class AHKRunTime
 		sourcePath := DBGp_DecodeFileURI(sourceUri)
 		this.AddBk(sourceUri, line, bkID, bkinfo)
 		this.bInBkProcess := false
-		
+
 		return {"verified": "true", "line": line, "id": bkID, "source": sourcePath}
 	}
 
@@ -335,10 +335,6 @@ class AHKRunTime
 		catch error
 			return
 		
-		; what a weird bug
-		; delete a key-val pair
-		; skip a key-val pair
-		; papapa! good job, ahk! OTZ
 		for line in bkinfo
 		{
 			if !bkCheckDict.HasKey(line)
@@ -408,7 +404,7 @@ class AHKRunTime
 			Dbg_VarData := {"name": Dbg_NewVarName, "value": Dbg_VarData, "type": type}
 			;VE_Create(Dbg_VarName, Dbg_VarData, Dbg_VarIsReadOnly)
 		}else
-			Dbg_VarData := this.InspectObject(dom)
+			Dbg_VarData := this.GetObjectInfoFromDom(dom, frameId)
 
 		return Dbg_VarData
 	}
@@ -434,7 +430,7 @@ class AHKRunTime
 		return {"name": name, "fullName": name, "value": value, "type": type, "facet": facet}
 	}
 
-	InspectObject(ByRef objdom)
+	GetObjectInfoFromDom(ByRef objdom, frameId)
 	{
 		root := objdom.selectSingleNode("/response/property/@name").text
 		; this.sendEvent(CreateOutputEvent("stdout", root))
@@ -463,7 +459,19 @@ class AHKRunTime
 			nodeFullName := SubStr(fixedFullName, 2) 
 			; this.sendEvent(CreateOutputEvent("stdout", nodeFullName))
 			nodeType := node.attributes.getNamedItem("type").text
-			nodeValue := DBGp_Base64UTF8Decode(node.text)
+			if (nodeType == "object")
+			{
+				; Check if node is an function object
+				; TODO: Enrich infomation display for object
+				ChildNameData := this.InspectVariable(nodeFullName, frameId)
+				if (ChildNameData.value[1] == nodeFullName)
+					nodeValue := "(Method)"
+				else
+					nodeValue := "(Object)"
+			}
+			else
+				nodeValue := DBGp_Base64UTF8Decode(node.text)
+			; nodeValue := (nodeType == "object") ? "(Object)" : DBGp_Base64UTF8Decode(node.text)
 			name.Push(nodeName), type.Push(nodeType), value.Push(nodeValue), fullName.Push(nodeFullName)
 		}
 
@@ -573,6 +581,7 @@ class AHKRunTime
 
 	DisableBk(uri, line)
 	{
+		; this.
 		bkID := this.GetBk(uri, line)["id"]
 		this.Dbg_Session.breakpoint_update("-s disabled -d " bkID, Dbg_Response)
 		; this.Dbg_BkList[uri].Delete(line)

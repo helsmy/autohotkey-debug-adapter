@@ -249,10 +249,16 @@ class DebugSession extends Application
             {
 				if (variablesRaw.name[A_Index] = "true" or variablesRaw.name[A_Index] = "false")
 					variablesRaw.name[A_Index] .= " "
+
+                value := variablesRaw.value[A_Index]
+                if (variablesRaw.type[A_Index] == "undefined")
+                    value := "<undefined>"
+                else if (variablesRaw.type[A_Index] == "string")
+                    value := """" value """"
 				; FIXME: problem in name is 'true' or 'false'
                 variables.Push({"name": variablesRaw.name[A_Index]
                                ,"type": variablesRaw.type[A_Index]
-                               ,"value": variablesRaw.type[A_Index] == "undefined" ? "<undefined>" : variablesRaw.value[A_Index]
+                               ,"value": value
                                ,"variablesReference"
 							   : variablesRaw.type[A_Index] == "object" 
                                ? this._variableHandles.create([variablesRaw.fullName[A_Index], id[2]])+0 : 0})
