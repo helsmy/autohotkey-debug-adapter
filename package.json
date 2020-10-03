@@ -2,15 +2,18 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adapter for AutoHotKey.",
-	"version": "0.6.7",
+	"version": "0.6.8",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
 	},
 	"license": "LGPL-3.0",
 	"keywords": [
-		"ahk","AutoHotKey","autohotkey",
-		"debug","debugger"
+		"ahk",
+		"AutoHotKey",
+		"autohotkey",
+		"debug",
+		"debugger"
 	],
 	"engines": {
 		"vscode": "^1.44.0"
@@ -40,7 +43,6 @@
 			}
 		],
 		"properties": {
-
 			"autohotkey.executable": {
 				"type": "string",
 				"default": "C:\\Program Files\\Autohotkey\\AutoHotkey.exe",
@@ -53,7 +55,10 @@
 				"label": "AutoHotKey Debug",
 				"program": "./ahkdbg/debugAdapter.ahk",
 				"runtime": "./bin/AutoHotkey.exe",
-				"languages": ["ahk", "autohotkey"],
+				"languages": [
+					"ahk",
+					"autohotkey"
+				],
 				"configurationAttributes": {
 					"launch": {
 						"required": [
@@ -70,7 +75,7 @@
 								"description": "Automatically stop after launch.",
 								"default": true
 							},
-							"captureStreams" : {
+							"captureStreams": {
 								"type": "boolean",
 								"description": "Whether to receive standard io stream.",
 								"default": true
@@ -95,7 +100,7 @@
 						"name": "AHKDebug",
 						"program": "${workspaceRoot}/${fileBasename}",
 						"stopOnEntry": true,
-						"captureStreams" : true,
+						"captureStreams": true,
 						"AhkExecutable": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
 						"port": 9005
 					}
@@ -110,7 +115,7 @@
 							"name": "A new configuration for 'debugging' AutoHotKey.",
 							"program": "^\"\\${workspaceRoot}/\\${fileBasename}\"",
 							"stopOnEntry": true,
-							"captureStreams" : true,
+							"captureStreams": true,
 							"AhkExecutable": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
 							"port": 9005
 						}
@@ -124,7 +129,7 @@
 		"compile": "tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "yarn run compile",
-		"test": "node ./out/test/runTest.js",
+		"test": "mocha -u tdd ./out/tests/",
 		"package": "vsce package",
 		"publish": "vsce publish"
 	},
@@ -135,6 +140,7 @@
 		"@types/vscode": "^1.44.0",
 		"glob": "^7.1.5",
 		"mocha": "^6.2.2",
+		"vscode-debugadapter-testsupport": "1.37.0",
 		"typescript": "^3.6.4",
 		"tslint": "^5.20.0",
 		"vscode-test": "^1.2.2"

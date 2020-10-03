@@ -19,6 +19,11 @@ class ProtocolServer
 
 	ServeForever()
 	{
+		; this.hStdin := DllCall("GetStdHandle","Uint", -10)
+		; logger("Stdin Handle: " this.hStdin)
+		; this.waitCallback := RegisterCallback("OnStdin")
+		; this.hWait := RegisterWaitForSingleObject(this.hStdin, this.waitCallback, 0)
+		; logger("Wait Object Handle: " this.hWait)
 		HOR := ObjBindMethod(this, "HandleOneRequest")
 		While (this.keepRun)
 		{
@@ -42,6 +47,9 @@ class ProtocolServer
 					EventDispatcher.Put(HOR, req)
 			}
 		}
+		; DllCall("UnregisterWaitEx", "Uint", this.hWait, "Uint", -1)
+		; this.hWait := 0
+
 	}
 
 	HandleOneRequest(request_data)
@@ -57,10 +65,45 @@ class ProtocolServer
         this.RH.FinishResponse(result)
     }
 
+	OnRecv()
+	{
+		ToolTip, Console Input Read!
+		DllCall("UnregisterWaitEx", "Uint", this.hWait, "Uint", -1)
+		this.hWait := 0
+		HOR := ObjBindMethod(this, "HandleOneRequest")
+		r := this.inStream.Read()
+		; this.hWait := RegisterWaitForSingleObject(this.hStdin, this.waitCallback, 0)
+		logger(r)
+		; Send request to EventDispatcher
+		; hacking way only fit to stdio
+		while (r)
+		{
+			header := StrSplit(r, "`r`n`r`n",,2)
+			r := header[2]
+			header := header[1]
+			; What a difficult thing to make sure converting is right in v1 OTZ
+			req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
+			cap := StrPut(r, "utf-8")
+			VarSetCapacity(buffer, cap)
+			StrPut(r, &buffer, cap, "utf-8")
+			req := StrGet(&buffer, req_l+0, "utf-8")
+			; Send request to EventDispatcher
+			; FIXME: UTF-8 block dispatcher
+			if (!!req)
+				EventDispatcher.Put(HOR, req)
+		}
+	}
+
 	HandleEvent(event)
 	{
 		this.RH.Send(event)
 	}
+
+	; __Delete()
+	; {
+	; 	if (this.hWait)
+	; 		DllCall("UnregisterWaitEx", "Uint", this.hWait, "Uint", -1)
+	; }
 }
 
 class EventDispatcher
@@ -163,6 +206,37 @@ class RequestHandler
 MakeServer(server_address, application)
 {
     server := new ProtocolServer(server_address*)
+	EventDispatcher.On("recv", ObjBindMethod(server, "OnRecv"))
     server.SetApp(application)
     return server
+}
+
+RegisterWaitForSingleObject(waitObject, waitCallBack, state, timeout := -1, execOption := true)
+{
+    VarSetCapacity(hWait, 16, 0)
+    ; WT_EXECUTEONLYONCE: 0x00000008, WT_EXECUTEDEFAULT: 0
+    execOption := executeOnlyOnce ? 0x00000008 : 0x00000000      
+    if (DllCall("RegisterWaitForSingleObject", "UInt", &hWait
+                    , "Uint", waitObject
+                    , "Uint", waitCallback
+                    , "Uint", state
+                    , "Uint", timeout
+                    , "Uint", execOption) == 0)
+    {
+        throw Exception("RegisterWaitForSingleObject Error" , -1, "Error Code: " DllCall("GetLastError"))
+    }
+	; logger("Function hWait: " hWait)
+    return NumGet(hWait)+0
+}
+
+OnStdin(lpParameter, TimerOrWaitFired) 
+{
+	CallBackStd()
+}
+
+CallBackStd()
+{
+	; stdin := FileOpen("*", "r")
+	EventDispatcher.EmitImmediately("recv", "")
+	
 }

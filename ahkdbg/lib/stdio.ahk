@@ -2,6 +2,7 @@ class StdIO
 {
 	__New()
 	{
+		; global hWait
 		GENERIC_READ := 0x80000000  ; 以读取而不是写入的方式来打开文件.
 		OPEN_EXISTING := 3  ; 此标志表示要打开的文件必须已经存在.
 		FILE_SHARE_VALID_FLAGS := 0x00000007
@@ -65,7 +66,25 @@ class StdIO
 
 	__Delete()
 	{
+		global hWait
 		this.inStream.Close()
 		this.outStream.Close()
+		; if (hWait)
+		; 	DllCall("UnregisterWaitEx", "Uint", hWait, "Uint", -1)
 	}
 }
+
+
+
+; OnStdin(lpParameter, TimerOrWaitFired) 
+; {
+; 	CallBackStd()
+; }
+
+; CallBackStd()
+; {
+; 	ToolTip, Console inputted!
+; 	stdin := FileOpen("*", "r")
+; 	text := stdin.Read()
+; 	ToolTip, %text%
+; }
