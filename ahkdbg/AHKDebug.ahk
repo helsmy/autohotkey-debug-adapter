@@ -261,6 +261,7 @@ class DebugSession extends Application
                                ,"value": value
                                ,"variablesReference"
 							   : variablesRaw.type[A_Index] == "object" 
+                            ;    store fullname for inspecting
                                ? this._variableHandles.create([variablesRaw.fullName[A_Index], id[2]])+0 : 0})
                                ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
                 if variablesRaw.facet == "Builtin"
