@@ -31,14 +31,16 @@ class AHKRunTime
 		this.dbgPort := 9005 ;temp mock debug port
 		this.bIsAttach := false
 		this.dbgCaptureStreams := false
-		RegRead, ahkpath, HKEY_CLASSES_ROOT\AutoHotkeyScript\DefaultIcon
-		this.AhkExecutable := SubStr(ahkpath, 1, -2)
 		this.Dbg_Session := ""
 		this.Dbg_BkList := {}
-		this.dbgMaxChildren := 10+0
+		this.dbgMaxChildren := 99+0
 		this.currline := 0
 		this.isStart := false
 		this.stoppedReason := "breakpoint"
+		dfltExcutable := "C:\Program Files\AutoHotkey\AutoHotkey.exe"
+		RegRead, ahkDir, HKEY_LOCAL_MACHINE\SOFTWARE\AutoHotkey, InstallDir
+		ahkPath :=  ahkDir . "\Autohotkey.exe"
+		this.AhkExecutable := FileExist(ahkPath) ? ahkPath : dfltExcutable
 	}
 
 	Init(clientArgs)
@@ -74,12 +76,24 @@ class AHKRunTime
 		Run, "%AhkExecutable%" /Debug=%dbgAddr%:%dbgPort% "%szFilename%", %szDir%,, Dbg_PID ; run AutoHotkey and store its process ID
 		this.Dbg_PID := Dbg_PID
 
+		timeout := 0
 		while ((Dbg_AHKExists := Util_ProcessExist(Dbg_PID)) && this.Dbg_Session == "") ; wait for AutoHotkey to connect or exit
+		{
 			Sleep, 100 ; avoid smashing the CPU
+			; timeout += 100
+			; if (timeout == 1000)
+			; 	throw Exception("Connection timeout", -1, "May get wrong path: " this.path)
+		}	
 		DBGp_StopListening(this.Dbg_Socket) ; stop accepting script connection
 		this.isStart := true
 		if this.Dbg_Lang != "AutoHotkey"
 			throw Exception("invaild language.", -1, this.Dbg_Lang)
+        this.Dbg_Session.property_get("-c 1 -n A_AhkVersion", Dbg_Response)
+        logger(Dbg_Response)
+        v := DBGp_Base64UTF8Decode(loadXML(Dbg_Response).text)
+        this.AhkVer := SubStr(v, 1)
+        ; 立即取回子节点，设置了最大取回两层
+        this.SetEnableChildren(true)
 		; Pause
 	}
 
@@ -382,13 +396,14 @@ class AHKRunTime
 	InspectVariable(Dbg_VarName, frameId)
 	{
 		; Allow retrieving immediate children for object values
-		this.SetEnableChildren(true)
+		; this.SetEnableChildren(true)
 		if (frameId != "None")
 			this.Dbg_Session.property_get("-n " . Dbg_VarName . " -d " . frameId, Dbg_Response)
 		else
 		; context id of a global variable is 1
 			this.Dbg_Session.property_get("-c 1 -n " Dbg_VarName, Dbg_Response)
-		this.SetEnableChildren(false)
+		logger(Dbg_Response)
+		; this.SetEnableChildren(false)
 		dom := loadXML(Dbg_Response)
 
 		Dbg_NewVarName := dom.selectSingleNode("/response/property/@name").text
@@ -399,7 +414,7 @@ class AHKRunTime
 		}
 		if ((type := dom.selectSingleNode("/response/property/@type").text) != "Object")
 		{
-			Dbg_VarIsReadOnly := dom.selectSingleNode("/response/property/@facet").text = "Builtin"
+			Dbg_VarIsReadOnly := (dom.selectSingleNode("/response/property/@facet").text = "Builtin")
 			Dbg_VarData := DBGp_Base64UTF8Decode(dom.selectSingleNode("/response/property").text)
 			Dbg_VarData := {"name": Dbg_NewVarName, "value": Dbg_VarData, "type": type}
 			;VE_Create(Dbg_VarName, Dbg_VarData, Dbg_VarIsReadOnly)
@@ -421,18 +436,20 @@ class AHKRunTime
 		; if !this.bIsAsync && !this.Dbg_OnBreak
 
 		this.Dbg_Session.context_get(id, ScopeContext)
+		logger(ScopeContext)
 		ScopeContext := loadXML(ScopeContext)
 		name := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@name"))
 		value := Util_UnpackContNodes(ScopeContext.selectNodes("/response/property"))
 		type := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@type"))
 		facet := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@facet"))
-
+		logger(A_ThisFunc ": " fsarr().Print(value))
 		return {"name": name, "fullName": name, "value": value, "type": type, "facet": facet}
 	}
 
 	GetObjectInfoFromDom(ByRef objdom, frameId)
 	{
 		root := objdom.selectSingleNode("/response/property/@name").text
+		logger(A_ThisFunc ": " root)
 		; this.sendEvent(CreateOutputEvent("stdout", root))
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
 		
@@ -463,11 +480,13 @@ class AHKRunTime
 			{
 				; Check if node is an function object
 				; TODO: Enrich infomation display for object
-				ChildNameData := this.InspectVariable(nodeFullName, frameId)
-				if (ChildNameData.value[1] == nodeFullName)
-					nodeValue := "(Method)"
-				else
-					nodeValue := "(Object)"
+				; we are checking the A_Index item of second layer of property
+				; respone
+				;    └---property <-- layer 1
+				;           └---property
+				;           └---property <-- object item(need to unpack)
+				;                  └---property <-- we needed
+				nodeValue := Util_UnpackObjValue(node, A_Index, 2)
 			}
 			else
 				nodeValue := DBGp_Base64UTF8Decode(node.text)
@@ -513,7 +532,7 @@ class AHKRunTime
 		if v
 		{
 			Dbg_Session.feature_set("-n max_children -v " dbgMaxChildren)
-			Dbg_Session.feature_set("-n max_depth -v 1")
+			Dbg_Session.feature_set("-n max_depth -v 2")
 		}else
 		{
 			Dbg_Session.feature_set("-n max_children -v 0")
@@ -645,8 +664,123 @@ Util_UnpackContNodes(nodes)
 	o := []
 	Loop, % nodes.length
 		node := nodes.item[A_Index-1]
-		,o.Insert(node.attributes.getNamedItem("type").text != "object" ? DBGp_Base64UTF8Decode(node.text) : "(Object)")
+		,o.Insert(node.attributes.getNamedItem("type").text != "object" ? DBGp_Base64UTF8Decode(node.text) : Util_UnpackObjValue(node, A_Index))
+	logger(A_ThisFunc ": " fsarr().Print(o))
 	return o
+}
+
+Util_UnpackObjValue(ByRef node, index := 1, layer := 1) 
+{
+	classname := node.attributes.getNamedItem("classname").text
+	queryStr := "/response"
+	loop % layer
+		queryStr .= "/property"
+	queryStr .= "[" index "]/property"
+	switch classname
+	{
+		case "Object":
+			if (node.attributes.getNamedItem("children").text == "0")
+				return "[]"
+			propertyNodes := node.selectNodes(queryStr)
+			; Set default type of v1 object to array
+			t := "Array"
+			; Distinguish array based on array has continuous index and max index is equal to max count
+			loop % propertyNodes.length
+			{
+				node := propertyNodes.item[A_Index-1]
+				nodeName := node.attributes.getNamedItem("name").text 
+				if (SubStr(nodeName, 1, 1) == "[" && SubStr(nodeName, 0) == "]")
+				{
+					i := SubStr(nodeName, 2, StrLen(nodeName)-2)
+					if !(i == A_Index)
+					{
+						t := "Map"
+						break
+					}
+					continue
+				}
+				t := "Map"
+				break
+			}
+			return Util_PropertyNodesObjToStr(propertyNodes, t)
+		case "Class":
+			return "(Class)"
+		case "Array", "Map":
+			logger(A_ThisFunc ": " node.attributes.getNamedItem("name").text )
+			propertyNodes := node.selectNodes(queryStr)
+			return Util_PropertyNodesObjToStr(propertyNodes, classname)
+		default:
+			return classname
+	}
+}
+
+Util_PropertyNodesObjToStr(ByRef propertyNodes, type)
+{
+	start := type == "Array" ? "[" : "{"
+	, end := type == "Array" ? "]" : "}"
+	, s := start
+	, c := Min(10, propertyNodes.length) ; TODO: configable max display number
+	if (type == "Array") 
+	{
+		loop % c-1
+		{
+			; skip object base
+			node := propertyNodes.item[A_Index-1]
+			if (node.attributes.getNamedItem("name").text == "<base>")
+				continue
+			s .= Util_NodeTextToStr(node) ", "
+		}
+		node := propertyNodes.item[c-1]
+		if (c < propertyNodes.length)
+			s .= "..." end
+		else
+			s .= Util_NodeTextToStr(node) end
+	}
+	else 
+	{
+		loop % c-1
+		{
+			; skip object base
+			node := propertyNodes.item[A_Index-1]
+			if (node.attributes.getNamedItem("name").text == "<base>")
+				continue
+			s .= Util_NodeNameToMapKey(node) ": " Util_NodeTextToStr(node) ", "
+		}
+		node := propertyNodes.item[c-1]
+		if (c < propertyNodes.length)
+			s .= "..." end
+		else
+			s .= Util_NodeNameToMapKey(node) ": " Util_NodeTextToStr(node) end
+	}
+	return s
+}
+
+Util_NodeTextToStr(ByRef node)
+{
+	switch node.attributes.getNamedItem("type").text
+	{
+		case "string":
+			return """" DBGp_Base64UTF8Decode(node.text) """"
+		case "integer", "float":
+			return DBGp_Base64UTF8Decode(node.text)
+		case "object":
+		; we only display one layer, so return a ...
+			return "{...}"
+		default:
+		; TODO: send error message to vscode
+			throw Exception("Wrong respone node type: " node.attributes.getNamedItem("type").text, -1)
+	}
+}
+
+Util_NodeNameToMapKey(ByRef node)
+{
+	name := node.attributes.getNamedItem("name").text
+	; [number] is a number key
+	if (SubStr(nodeName, 1, 1) == "[" && SubStr(nodeName, 0) == "]")
+		return SubStr(nodeName, 2, StrLen(nodeName)-2)
+	; other is a string key
+	; TODO: handle object key in v2
+	return """" name """"
 }
 
 ST_ShortName(a)
