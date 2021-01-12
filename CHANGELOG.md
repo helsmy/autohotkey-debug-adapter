@@ -10,6 +10,8 @@
 6. global error catch and fix bug about run without debug (0.6.7)
 7. change display about string (0.6.8)
 8. fix bugs about display and breakpoint across file (0.6.9)
+9. array and dict preview (0.6.11)
+10. improve speed of inspecting object (0.6.11)
 
 ### 0.5.0
 

@@ -230,6 +230,7 @@ class DebugSession extends Application
     {
         frameId := env.arguments.frameId
         response["body"] := {}
+        ; Since ahk always keeps two scopes(Local, Global), just return them
         response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(["Local", frameId]), "expensive": "false"}
                                   , {"name": "Global", "variablesReference": this._variableHandles.create(["Global", "None"]), "expensive": "true"}]
         return [response]
@@ -238,7 +239,8 @@ class DebugSession extends Application
     ; TODO: May long running, need async exec here
     variablesRequest(response, env)
     {
-        ; just return some constant value, for now
+        ; Retrieve the identity information of request variable
+        ; id : [variableFullName, its frameid]
         id := this._variableHandles.get(env.arguments.variablesReference)
         variables := []
         ; Return variable list
