@@ -14,6 +14,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * Conditional breakpoint
   * Hit Count(how many hits of the breakpoint are ignored)  
   Debug adapter will auto skip breakpoint until script hits breakpoint of a given count.
+  ![Conditional breakpoint](images/hitBK.gif)
 
 ## Using
 
@@ -23,7 +24,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 4. Press the green 'play' button, if vs code doesn't find launch.json, it will creat one for you. Save it and switch back to ahk file you open.
 5. Press the green button again, debugger will start.
 
-![Debug](images/debugging.gif)
+![Debug](images/debug1.gif)
 
 ### Rule of change varibles
 
@@ -52,6 +53,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 An early version which needs test. Use it at you own risk.
 1. ~~Unsupport for non-ascii characters.~~ (still has bugs about set varibles with non-ascii string)
 2. ~~Breakpoint may can't set or cancel~~ (solution: fixed)
+3. The max number of object children to be display is 99.
 
 ## Furture Plan
 
