@@ -26,7 +26,7 @@ DAd.ServeForever()
 
 GlobalErrorHandler(exception)
 {
-    EventDispatcher.EmitImmediately("sendEvent", CreateOutputEvent("stdout", "Debug Adapter Error:" exception.Message))
+    EventDispatcher.EmitImmediately("sendEvent", CreateOutputEvent("stdout", "Debug Adapter Error:" exception.Message "Sepecially: " exception.Extra))
     EventDispatcher.EmitImmediately("sendEvent", CreateTerminatedEvent())
 }
 

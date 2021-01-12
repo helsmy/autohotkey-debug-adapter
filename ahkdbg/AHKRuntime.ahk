@@ -86,12 +86,15 @@ class AHKRunTime
 		}	
 		DBGp_StopListening(this.Dbg_Socket) ; stop accepting script connection
 		this.isStart := true
-		if this.Dbg_Lang != "AutoHotkey"
-			throw Exception("invaild language.", -1, this.Dbg_Lang)
-        this.Dbg_Session.property_get("-c 1 -n A_AhkVersion", Dbg_Response)
-        logger(Dbg_Response)
-        v := DBGp_Base64UTF8Decode(loadXML(Dbg_Response).text)
-        this.AhkVer := SubStr(v, 1)
+		if (this.Dbg_Lang != "AutoHotkey")
+		{
+			; Resolve that debugger does not exit, when syntax error at start.
+			; Why disconnection event is not sended under this situation?
+			if (Util_ProcessExist(Dbg_PID))
+				throw Exception("invaild language.", -1, this.Dbg_Lang)
+			else
+				this.SendEvent(CreateTerminatedEvent())
+		}
         ; 立即取回子节点，设置了最大取回两层
         this.SetEnableChildren(true)
 		; Pause
@@ -734,7 +737,8 @@ Util_PropertyNodesObjToStr(ByRef propertyNodes, type)
 		if (c < propertyNodes.length)
 			s .= "..." end
 		else
-			s .= Util_NodeTextToStr(node) end
+			s .= node.attributes.getNamedItem("name").text == "<base>" ? end
+			     : Util_NodeTextToStr(node) end
 	}
 	else 
 	{
@@ -750,7 +754,8 @@ Util_PropertyNodesObjToStr(ByRef propertyNodes, type)
 		if (c < propertyNodes.length)
 			s .= "..." end
 		else
-			s .= Util_NodeNameToMapKey(node) ": " Util_NodeTextToStr(node) end
+			s .= node.attributes.getNamedItem("name").text == "<base>" ? end
+			     : Util_NodeNameToMapKey(node) ": " Util_NodeTextToStr(node) end
 	}
 	return s
 }
@@ -765,6 +770,8 @@ Util_NodeTextToStr(ByRef node)
 			return DBGp_Base64UTF8Decode(node.text)
 		case "object":
 		; we only display one layer, so return a ...
+			if (node.attributes.getNamedItem("classname").text == "Array")
+				return "[...]"
 			return "{...}"
 		default:
 		; TODO: send error message to vscode

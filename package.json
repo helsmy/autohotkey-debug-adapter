@@ -2,7 +2,7 @@
 	"name": "autohotkey-debug",
 	"displayName": "AutoHotKey Debug",
 	"description": "Debug Adapter for AutoHotKey.",
-	"version": "0.6.8",
+	"version": "0.6.11",
 	"publisher": "helsmy",
 	"author": {
 		"name": "Helsmy"
@@ -68,7 +68,7 @@
 							"program": {
 								"type": "string",
 								"description": "Absolute path to an ahk file.",
-								"default": "${workspaceRoot}/${fileBasename}"
+								"default": "${file}"
 							},
 							"stopOnEntry": {
 								"type": "boolean",
@@ -98,7 +98,7 @@
 						"type": "ahkdbg",
 						"request": "launch",
 						"name": "AHKDebug",
-						"program": "${workspaceRoot}/${fileBasename}",
+						"program": "${file}",
 						"stopOnEntry": true,
 						"captureStreams": true,
 						"AhkExecutable": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
