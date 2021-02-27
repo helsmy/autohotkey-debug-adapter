@@ -46,9 +46,7 @@ class DebugSession extends Application
 
     configurationDoneRequest(response, env)
     {
-        ; Sleep, 2000 ; test timeout
         this._configurationDone := true
-        ; MsgBox, _configurationDone!
 
         return [response]
     }

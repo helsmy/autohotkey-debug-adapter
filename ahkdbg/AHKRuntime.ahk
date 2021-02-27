@@ -481,8 +481,6 @@ class AHKRunTime
 			nodeType := node.attributes.getNamedItem("type").text
 			if (nodeType == "object")
 			{
-				; Check if node is an function object
-				; TODO: Enrich infomation display for object
 				; we are checking the A_Index item of second layer of property
 				; respone
 				;    └---property <-- layer 1
@@ -783,8 +781,8 @@ Util_NodeNameToMapKey(ByRef node)
 {
 	name := node.attributes.getNamedItem("name").text
 	; [number] is a number key
-	if (SubStr(nodeName, 1, 1) == "[" && SubStr(nodeName, 0) == "]")
-		return SubStr(nodeName, 2, StrLen(nodeName)-2)
+	if (SubStr(name, 1, 1) == "[" && SubStr(name, 0) == "]")
+		return SubStr(name, 2, StrLen(name)-2)
 	; other is a string key
 	; TODO: handle object key in v2
 	return """" name """"
