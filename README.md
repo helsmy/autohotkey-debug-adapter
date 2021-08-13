@@ -8,6 +8,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * Show call stack and varibles.
 * change varibles in debugging
 * Debug ahkv2 since debug protocol do not change.(by set AhkExecutable path to v2 in launch.json)
+* Debug H version without multithread support.
 
 ## Experimental Feature
 
@@ -53,7 +54,8 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 An early version which needs test. Use it at you own risk.
 1. ~~Unsupport for non-ascii characters.~~ (still has bugs about set varibles with non-ascii string)
 2. ~~Breakpoint may can't set or cancel~~ (solution: fixed)
-3. The max number of object children to be display is 99.
+3. H version can be debugged, but multithread is no supported
+4. The max number of object children to be display is 99.
 
 ## Furture Plan
 
