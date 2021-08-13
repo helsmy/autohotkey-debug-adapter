@@ -40,7 +40,15 @@ class DebugSession extends Application
         ; response.body["supportsBreakpointLocationsRequest"] := "true"
 
         InitializedEvent := {"type": "event", "event": "initialized"}
-		this._runtime.Init(env.arguments)
+        switch env.arguments.pathFormat
+        {
+            ; Only support 'path' Path Format
+            case "path":
+                this._runtime.Init(env.arguments)
+            Default:
+                response["body"] := {"error": CreateMessage(-1,env.arguments.program " launch fail`nInvaild path format`nOnly support path but pass format: " env.arguments.pathFormat)}
+                return this.errorResponse(response, env)
+        }
         return [response, InitializedEvent]
     }
 
@@ -255,6 +263,10 @@ class DebugSession extends Application
                     value := "<undefined>"
                 else if (variablesRaw.type[A_Index] == "string")
                     value := """" value """"
+                    ; replace escape character to original form
+                    , value := StrReplace(value, "`n", "``n")
+                    , value := StrReplace(value, "`r", "``r")
+                    , value := StrReplace(value, "`t", "``t")
 				; FIXME: problem in name is 'true' or 'false'
                 variables.Push({"name": variablesRaw.name[A_Index]
                                ,"type": variablesRaw.type[A_Index]
@@ -317,7 +329,7 @@ class DebugSession extends Application
 			Process, Close, % this.Dbg_PID
 		this.isStart := false
 
-        if ！env.arguments.restart
+        if !env.arguments.restart
             env.server.keepRun := false  
         return [response]
     }

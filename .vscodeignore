@@ -11,3 +11,4 @@ vsc-extension-quickstart.md
 ahkdbg/*.bak
 *.vsix
 ahkdbg/ahkdbg.log
+testdata/*
