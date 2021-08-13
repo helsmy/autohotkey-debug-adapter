@@ -427,6 +427,9 @@ class AHKRunTime
 		return Dbg_VarData
 	}
 
+	; Entry of variable request
+	; id - name or id restored in variable handle
+	; frameId - where stack frame of this variable loacated
 	CheckVariables(id, frameId)
 	{
 		if (id == "Global")
@@ -439,6 +442,12 @@ class AHKRunTime
 		; if !this.bIsAsync && !this.Dbg_OnBreak
 
 		this.Dbg_Session.context_get(id, ScopeContext)
+		logger(ScopeContext)
+		; H version store global in context id=2
+		; and no extra feature_name can be used to 
+		; confirm H version
+		if (!InStr(ScopeContext, "</property>") && id == "-c 1")
+			this.Dbg_Session.context_get("-c 2", ScopeContext)
 		logger(ScopeContext)
 		ScopeContext := loadXML(ScopeContext)
 		name := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@name"))

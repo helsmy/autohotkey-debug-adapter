@@ -70,26 +70,15 @@ suite('Node Debug Adapter', () => {
 			]);
 		});
 
-		// test('should run program to the end (and not stop on Debugger.Break())', () => {
-
-		// 	const PROGRAM = Path.join(DATA_ROOT, 'simple/simple_break.ahk');
-
-		// 	return Promise.all([
-		// 		dc.configurationSequence(),
-		// 		dc.launch({ program: PROGRAM, noDebug: true }),
-		// 		dc.waitForEvent('terminated')
-		// 	]);
-		// });
-
 		test('should stop on debugger statement', () => {
 
 			const PROGRAM = Path.join(DATA_ROOT, 'simple/simple_break.ahk');
-			const DEBUGGER_LINE = 11;
+			const DEBUGGER_LINE = 3;
 
 			return Promise.all([
 				dc.configurationSequence(),
-				dc.launch({ program: PROGRAM }),
-				dc.assertStoppedLocation('step', { line: DEBUGGER_LINE })
+				dc.launch({ program: PROGRAM, stopOnEntry: true }),
+				dc.assertStoppedLocation('entry', { line: DEBUGGER_LINE })
 			]);
 		});
 	});

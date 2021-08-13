@@ -83,9 +83,7 @@ class ProtocolServer
 			header := header[1]
 			; What a difficult thing to make sure converting is right in v1 OTZ
 			req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
-			cap := StrPut(r, "utf-8")
-			VarSetCapacity(buffer, cap)
-			StrPut(r, &buffer, cap, "utf-8")
+			StrPut(r, &buffer, req_l, "utf-8")
 			req := StrGet(&buffer, req_l+0, "utf-8")
 			; Send request to EventDispatcher
 			; FIXME: UTF-8 block dispatcher

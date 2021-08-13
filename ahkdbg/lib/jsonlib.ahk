@@ -76,7 +76,8 @@ Class JSON
 
 	ToObj( str )
 	{
-
+		batch := A_BatchLines
+		SetBatchLines, -1
 		quot := """" ; firmcoded specifically for readability. Hardcode for (minor) performance gain
 		ws := "`t`n`r " Chr(160) ; whitespace plus NBSP. This gets trimmed from the markup
 		obj := {} ; dummy object
@@ -175,7 +176,7 @@ Class JSON
 			If ( isarray := isarrays.remove() )
 				key++
 		} ; Loop Parse, str, % "]}"
-
+		SetBatchLines, % batch
 		Return obj
 	} ; json_toobj( str )
 }

@@ -12,6 +12,7 @@
 8. fix bugs about display and breakpoint across file (0.6.9)
 9. array and dict preview (0.6.11)
 10. improve speed of inspecting object (0.6.11)
+11. fix global variables can't display in H version (0.6.13)
 
 ### 0.5.0
 
