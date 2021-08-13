@@ -348,7 +348,7 @@ class AHKRunTime
 	{
 		uri := DBGp_EncodeFileURI(path)
 		try 
-			bkinfo := fsarr().cpy(this.Dbg_BkList[uri])
+			bkinfo := this.Dbg_BkList[uri].Clone()
 		catch error
 			return
 		

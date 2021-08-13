@@ -40,7 +40,7 @@ CreateGui()
     Gui, Margin, 15, 15
     Gui, Font, s9, Consolas
     Gui, Add, Text,, Output
-    Gui, Add, Edit, y+3 -Wrap +HScroll R20 HwndhEdit1, % Format("{:81}", "")
+    Gui, Add, Edit, y+3 -Wrap +HScroll +Multi R20 HwndhEdit1, % Format("{:81}", "")
     ControlGetPos,,,W,,,ahk_id %hEdit1%
     Gui, Add, Text,, Command Line
     Gui, Add, Edit, y+3 -Wrap HwndhEdit2 w%W%, Dir
