@@ -187,9 +187,10 @@ class RequestHandler
 		responseStr := fsarr().print(response)
 		responseStr := StrReplace(responseStr, """true""" , "true")
 		responseStr := StrReplace(responseStr, """false""" , "false")
-		responseStr := StrReplace(responseStr, "`n" , "\n")
-		responseStr := StrReplace(responseStr, "`t" , "\t")
-		responseStr := StrReplace(responseStr, "`r" , "\r")
+		; responseStr := StrReplace(responseStr, "`n" , "\n")
+		; responseStr := StrReplace(responseStr, "`t" , "\t")
+		; responseStr := StrReplace(responseStr, "`r" , "\r")
+		responseStr := this.ReplaceControlChr(responseStr)
 		if response.type == "event"
 			logger("DA -> VSC event: " responseStr)
 		else
@@ -198,6 +199,16 @@ class RequestHandler
 
 		this.outStream.Write(responseStr)
 		this.seq++
+	}
+
+	ReplaceControlChr(s)
+	{
+		s := StrReplace(s, "`n" , "``n")
+		s := StrReplace(s, "`t" , "``t")
+		s := StrReplace(s, "`r" , "``r")
+		Loop 32
+			s := StrReplace(s, Chr(A_Index-1), "``" Chr(A_Index-1+0x40))
+		return s
 	}
 }
 
