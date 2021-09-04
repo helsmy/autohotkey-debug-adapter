@@ -11,15 +11,11 @@ SplitPath, A_ScriptName, , , , thisscriptname
 ; SetWinDelay, -1 ; Remove short delay done automatically after every windowing command except IfWinActive and IfWinExist
 ; SetKeyDelay, -1, -1 ; Remove short delay done automatically after every keystroke sent by Send or ControlSend
 ; SetMouseDelay, -1 ; Remove short delay done automatically after Click and MouseMove/Click/Drag
-stdin:=CriticalObject(" (&c_req) ")
-While (true)
+stdin:=ObjShare(" (&c_req) ")
+While (stdin.KeepRun)
 {
     Head := stdin.ReadLine()
-    l := StrSplit(Head, ":")
-    l := Trim(l[2]) & -1
-    stdin.RawRead(r, l)
-    r := StrGet(&r, "UTF-8")
-    
+    stdin.Process(Head)
 }
 
 ; c_req := CriticalObject(this.inStream.inStream)

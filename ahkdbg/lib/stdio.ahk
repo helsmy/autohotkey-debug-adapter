@@ -21,6 +21,16 @@ class StdIO
 		; this.outStream := FileOpen("*", "w", "utf-8")
 	}
 
+	SetProcesser(callback) 
+	{
+		this.processer := callback
+	}
+
+	Process(s)
+	{
+		this.processer(s)
+	}
+
 	IoCompletionCallback(dwErrorCode, dwNumberOfBytesTransfered, lpOverlapped)
 	{
 		ToolTip, % "ErrorCode: " ErrorCode " BytesTransfered: " dwNumberOfBytesTransfered
