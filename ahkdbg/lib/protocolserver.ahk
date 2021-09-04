@@ -2,6 +2,7 @@
 #Include <fsarr>
 #Include <stdio>
 #Include <logger>
+#Include <StrBuffer>
 
 class ProtocolServer
 {
@@ -10,6 +11,7 @@ class ProtocolServer
 		this.inStream := inStream
 		this.RH := new RequestHandler(outStream)
 		this.keepRun := true
+		this.buffer := new StrBuffer(512)
 	}
 
 	SetApp(application)
@@ -30,26 +32,75 @@ class ProtocolServer
 			r := this.inStream.Read()
 			; Send request to EventDispatcher
 			; hacking way only fit to stdio
-			while (r)
+			if (r != "") 
+				this.buffer.WriteStr(r)
+			if (this.buffer.length > 0)
 			{
-				header := StrSplit(r, "`r`n`r`n",,2)
-				r := header[2]
-				header := header[1]
-				; What a difficult thing to make sure converting is right in v1 OTZ
-				req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
-				cap := StrPut(r, "utf-8")
-				VarSetCapacity(buffer, cap)
-				StrPut(r, &buffer, cap, "utf-8")
-				req := StrGet(&buffer, req_l+0, "utf-8")
-				; Send request to EventDispatcher
-				; FIXME: UTF-8 block dispatcher
-				if (!!req)
+				line := this.buffer.GetLine()
+				header := Trim(line, "`r`n `t")
+				Logger("header: " header)
+				if (InStr(header, "Content-Length")) 
+				{
+					req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
+					; remove header line and \r\n spliter, 
+					; StrPut会返回带终止\0的长度，所以再额外加1即可
+					this.buffer.LShift(StrPut(line, "UTF-8")+1)
+					req := this.buffer.GetStr(req_l)
+					this.buffer.LShift(req_l)
 					EventDispatcher.Put(HOR, req)
+				}
+				else
+					; skip unknow request
+					this.buffer.LShift(StrPut(line, "UTF-8") - 1)
 			}
+			; else
+			; 	Sleep 20
+			; while (r)
+			; {
+			; 	; Logger("Stdin Full: " r)
+			; 	header := StrSplit(r, "`r`n`r`n",,2)
+			; 	; Logger("Header: " header[1])
+			; 	r := header[2]
+			; 	header := header[1]
+			; 	; What a difficult thing to make sure converting is right in v1 OTZ
+			; 	req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
+			; 	cap := StrPut(r, "utf-8")
+			; 	VarSetCapacity(buffer, cap)
+			; 	StrPut(r, &buffer, cap, "utf-8")
+			; 	req := StrGet(&buffer, req_l+0, "utf-8")
+			; 	; Send request to EventDispatcher
+			; 	; FIXME: UTF-8 block dispatcher
+			; 	if (!!req)
+			; 		EventDispatcher.Put(HOR, req)
+			; }
+			; sleep 20
 		}
 		; DllCall("UnregisterWaitEx", "Uint", this.hWait, "Uint", -1)
 		; this.hWait := 0
 
+	}
+
+	STDINCallBack(header)
+	{
+		HOR := ObjBindMethod(this, "HandleOneRequest")
+		this.buffer.WriteStr(header)
+		header := this.buffer.GetLine()
+		if (InStr(header, "Content-Length")) 
+		{
+			req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
+			this.inStream.RawRead(r, req_l+2)
+			this.buffer.Write(&r)
+			; remove header line and \r\n spliter, 
+			; StrPut会返回带终止\0的长度，所以再额外加1即可
+			this.buffer.LShift(StrPut(line, "UTF-8")+1)
+			req := this.buffer.GetStr(req_l)
+			this.buffer.LShift(req_l)
+			EventDispatcher.Put(HOR, req)
+		}
+		else
+			; skip unknow request
+			this.buffer.LShift(StrPut(line, "UTF-8") - 1)
+		
 	}
 
 	HandleOneRequest(request_data)
@@ -97,11 +148,11 @@ class ProtocolServer
 		this.RH.Send(event)
 	}
 
-	; __Delete()
-	; {
-	; 	if (this.hWait)
-	; 		DllCall("UnregisterWaitEx", "Uint", this.hWait, "Uint", -1)
-	; }
+	__Delete()
+	{
+		this.buffer.length := 0
+		this.buffer.Done()
+	}
 }
 
 class EventDispatcher
@@ -187,10 +238,7 @@ class RequestHandler
 		responseStr := fsarr().print(response)
 		responseStr := StrReplace(responseStr, """true""" , "true")
 		responseStr := StrReplace(responseStr, """false""" , "false")
-		; responseStr := StrReplace(responseStr, "`n" , "\n")
-		; responseStr := StrReplace(responseStr, "`t" , "\t")
-		; responseStr := StrReplace(responseStr, "`r" , "\r")
-		responseStr := this.ReplaceControlChr(responseStr)
+		responseStr := this.ReplaceControlChr(responseStr, (response["type"] != "event"))
 		if response.type == "event"
 			logger("DA -> VSC event: " responseStr)
 		else
@@ -201,20 +249,26 @@ class RequestHandler
 		this.seq++
 	}
 
-	ReplaceControlChr(s)
+	ReplaceControlChr(s, isEascapeCR := false)
 	{
-		s := StrReplace(s, "`n" , "``n")
-		s := StrReplace(s, "`t" , "``t")
-		s := StrReplace(s, "`r" , "``r")
-		Loop 32
-			s := StrReplace(s, Chr(A_Index-1), "``" Chr(A_Index-1+0x40))
+		if !isEascapeCR
+			s := StrReplace(s, "`n" , "\n")
+			,s := StrReplace(s, "`t" , "\t")
+			,s := StrReplace(s, "`r" , "\r")
+		loop
+			if (RegExMatch(s, "[\cA-\cZ]", char))
+				s := StrReplace(s, char, "``" Chr(Ord(char)+0x40))
+			else
+				break
+		
 		return s
 	}
 }
 
 MakeServer(server_address, application)
 {
-    server := new ProtocolServer(server_address*)
+	server := new ProtocolServer(server_address*)
+	server_address[1].SetProcesser(ObjBindMethod(server, "STDCallBack"))
 	EventDispatcher.On("recv", ObjBindMethod(server, "OnRecv"))
     server.SetApp(application)
     return server

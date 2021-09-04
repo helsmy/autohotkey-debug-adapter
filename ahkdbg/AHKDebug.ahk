@@ -178,6 +178,7 @@ class DebugSession extends Application
 
     setVariableRequest(response, env)
     {
+        MsgBox, Fire setVariable
         frameId := this._variableHandles.get(env.arguments.variablesReference)[2]
         try
             variable := this._runtime.SetVariable(env.arguments.name, frameId, env.arguments.value)
@@ -187,7 +188,7 @@ class DebugSession extends Application
             return this.errorResponse(response, env)
         }
         response["body"] := {}
-        response.body["value"] := variable.value
+        response.body["value"] := (variable.type == "string") ? """" variable.value """" : variable.variable
         , response.body["type"] := variable.type
 
         return [response]
