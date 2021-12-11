@@ -288,6 +288,29 @@ class DebugSession extends Application
         return [response]
     }
 
+    evaluateRequest(response, env) {
+        if (!this.isStart) 
+            return this.errorResponse(response, env)
+        varName := env.arguments.expression
+        frameId := env.arguments.frameId
+        body := {}
+        varibleInfo := this._runtime.EvaluateVariable(varName, frameId)
+        logger(fsarr().print(varibleInfo))
+        var_type := varibleInfo["type"]
+        result := varibleInfo["value"]
+        if (var_type == "undefined")
+            result := "<undefined>"
+        else if (var_type == "string")
+            result := """" result """"
+        body["result"] := result
+        body["type"] := var_type
+        body["variablesReference"] := var_type == "object" 
+                                    ? this._variableHandles.create([varibleInfo["fullName"], frameId]) : 0
+        response["body"] := body
+
+        return [response]
+    }
+
     continueRequest(response, env)
     {
         this._variableHandles.Reset()
