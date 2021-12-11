@@ -419,7 +419,7 @@ class AHKRunTime
 		{
 			Dbg_VarIsReadOnly := (dom.selectSingleNode("/response/property/@facet").text = "Builtin")
 			Dbg_VarData := DBGp_Base64UTF8Decode(dom.selectSingleNode("/response/property").text)
-			Dbg_VarData := {"name": Dbg_NewVarName, "value": Dbg_VarData, "type": type}
+			Dbg_VarData := {"name": [Dbg_NewVarName], "value": [Dbg_VarData], "type": [type]}
 			;VE_Create(Dbg_VarName, Dbg_VarData, Dbg_VarIsReadOnly)
 		}else
 			Dbg_VarData := this.GetObjectInfoFromDom(dom, frameId)
@@ -461,7 +461,7 @@ class AHKRunTime
 	GetObjectInfoFromDom(ByRef objdom, frameId)
 	{
 		root := objdom.selectSingleNode("/response/property/@name").text
-		logger(A_ThisFunc ": " root)
+		; logger(A_ThisFunc ": " root)
 		; this.sendEvent(CreateOutputEvent("stdout", root))
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
 		
@@ -505,6 +505,29 @@ class AHKRunTime
 		}
 
 		return {"name": name, "fullName": fullName, "value": value, "type": type}
+	}
+
+	EvaluateVariable(id, frameId) 
+	{
+		if (frameId != "None")
+			this.Dbg_Session.property_get("-n " id " -d "  frameId, Dbg_Response)
+		else
+		; context id of a global variable is 1
+			this.Dbg_Session.property_get("-c 1 -n " id, Dbg_Response)
+
+		dom := loadXML(Dbg_Response)
+		logger(Dbg_Response)
+
+		VarName := dom.selectSingleNode("/response/property/@name").text
+		VarFullName := dom.selectSingleNode("/response/property/@fullname").text
+		VarData := DBGp_Base64UTF8Decode(dom.selectSingleNode("/response/property").text)
+		VarType := dom.selectSingleNode("/response/property/@type").text
+		if (VarType == "object")
+		{
+			; select varible node for value unpack
+			VarData := Util_UnpackObjValue(dom.selectSingleNode("/response/property"))
+		}
+		return {"name": VarName, "fullname": VarFullName, "value": VarData, "type": VarType}
 	}
 
 	SetVariable(varFullName, frameId, value)
