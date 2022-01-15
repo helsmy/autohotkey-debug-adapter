@@ -12,3 +12,4 @@ ahkdbg/*.bak
 *.vsix
 ahkdbg/ahkdbg.log
 testdata/*
+images

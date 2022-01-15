@@ -7,8 +7,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * Basic debug functions. Step into, step out, breakpoints etc.
 * Show call stack and varibles.
 * change varibles in debugging
-* Debug ahkv2 since debug protocol do not change.(by set AhkExecutable path to v2 in launch.json)
-* Debug H version without multithread support.
+* Debug ahkv2 or H version since debug protocol do not change.(by set AhkExecutable path to corresponding runtime path in launch.json)
 
 ## Experimental Feature
 
@@ -16,6 +15,8 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
   * Hit Count(how many hits of the breakpoint are ignored)  
   Debug adapter will auto skip breakpoint until script hits breakpoint of a given count.
   ![Conditional breakpoint](images/hitBK.gif)
+* Watch Expression
+  ![Watch Expression](images/watch.gif)
 
 ## Using
 
