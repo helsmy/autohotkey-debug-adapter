@@ -14,6 +14,7 @@
 10. improve speed of inspecting object (0.6.11)
 11. fix global variables can't display in H version (0.6.13)
 12. fix bugs when variable contains control character
+13. implement evaluate request (0.6.16)
 
 ### 0.5.0
 
