@@ -15,7 +15,7 @@ class DebugSession extends Application
     {
         this._configurationDone := false
         this._timeout := false
-		this.isStart := false
+        this.isStart := false
         this._variableHandles := new Handles()
         this._runtime := new AHKRunTime()
     }
@@ -62,9 +62,13 @@ class DebugSession extends Application
     ; async exec
     launchRequest(response, env)
     {
-		; start ahk debug here
-		if !this.isStart
-		{
+        ; start ahk debug here
+        if !this.isStart
+        {
+            if (env.arguments.AhkExecutable == "-1") {
+                response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
+                return this.errorResponse(response, env)
+            }
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
             this._runtime.dbgPort := env.arguments.port
@@ -84,28 +88,18 @@ class DebugSession extends Application
             }
             else
                 this.isStart := true
-		}
+        }
 
         ; wait until configuration has finished (and configurationDoneRequest has been called)
         ; Async wait by send WaitConfiguration event to event queue
         if (!this._configurationDone and !this._timeout)
         {
+            server := env.server
             CTO := ObjBindMethod(this, "CheckTimeOut")
             SetTimer, % CTO, -1000
-            ; Sleep, 25
-            server := env.server
-            seq := env.seq
-
-            HOR := ObjBindMethod(server, "HandleOneRequest")
-
-            waitConfigurationRequest := {"command": "waitConfiguration", "seq": seq}
-            waitConfigurationRequest["arguments"] := env.arguments
-            waitConfigurationRequest := fsarr().print(waitConfigurationRequest)
-
-            waitConfigurationRequest := "Content-Length: " StrLen(waitConfigurationRequest) "`r`n`r`n" . waitConfigurationRequest
-            EventDispatcher.Put(HOR, waitConfigurationRequest)
-            ; empty list won't fire send method
-            return []
+            RR := ObjBindMethod(server, "ResumeRequest")
+            EventDispatcher.Put(RR, env)
+            return
         }
 
         response["command"] := "launch"
@@ -117,10 +111,42 @@ class DebugSession extends Application
         return [response]
     }
 
-    waitConfigurationRequest(response, env)
+    attachRequest(response, env) 
     {
-        ; Mock Request to wait ConfigurationDoneRequest
-        return this.launchRequest(response, env)
+        runtime := env.arguments.AhkExecutable
+        port    := env.arguments.port
+        program := env.arguments.program
+        if !this.isStart 
+        {
+            if (runtime == "-1") {
+                response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
+                return this.errorResponse(response, env)
+            }
+            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
+            this._runtime.AhkExecutable := FileExist(runtime) ? runtime : this._runtime.AhkExecutable
+            this._runtime.dbgPort := port
+            
+            try
+                this._runtime.Attach(program)
+            catch e
+            {
+                response["body"] := {"error": CreateMessage(-1, "Fail to attach file: '" program "'")}
+                return this.errorResponse(response, env)
+            }
+        }
+
+        if (!this._configurationDone and !this._timeout)
+        {
+            server := env.server
+            CTO := ObjBindMethod(this, "CheckTimeOut")
+            SetTimer, % CTO, -1000
+            RR := ObjBindMethod(server, "ResumeRequest")
+            EventDispatcher.Put(RR, env)
+            return
+        }
+
+        this._runtime.StartRun()
+        return [response]
     }
 
     setBreakpointsRequest(response, env)
@@ -217,14 +243,14 @@ class DebugSession extends Application
         endFrame := startFrame + maxLevels
 
         ; source := {"name": this._runtime.GetBaseFile(), "path":this._runtime.GetPath(), "sourceReference": 0+0, "data": "mockdata"}
-		stack := this._runtime.GetStack()
-		stackFrames := []
-		Loop % stack.where.Length()
-		{
-			source := {"name": this.GetBaseFile(stack.file[A_Index]), "path": stack.file[A_Index], "sourceReference": 0+0, "adapterData": "mockdata"}
-			stackFrames.Push({"id": stack.level[A_Index]+0, "name": stack.where[A_Index], "line": stack.line[A_Index]+0, "source": source, "column": 0}) ;
-			; MsgBox, % fsarr().print(source)
-		}
+        stack := this._runtime.GetStack()
+        stackFrames := []
+        Loop % stack.where.Length()
+        {
+            source := {"name": this.GetBaseFile(stack.file[A_Index]), "path": stack.file[A_Index], "sourceReference": 0+0, "adapterData": "mockdata"}
+            stackFrames.Push({"id": stack.level[A_Index]+0, "name": stack.where[A_Index], "line": stack.line[A_Index]+0, "source": source, "column": 0}) ;
+            ; MsgBox, % fsarr().print(source)
+        }
         response["body"] := {}
         response.body["stackFrames"] := stackFrames
         response.body["totalFrames"] := stackFrames.Length()
@@ -255,8 +281,8 @@ class DebugSession extends Application
             variablesRaw := this._runtime.CheckVariables(id[1], id[2])
             Loop % variablesRaw.name.Length()
             {
-				if (variablesRaw.name[A_Index] = "true" or variablesRaw.name[A_Index] = "false")
-					variablesRaw.name[A_Index] .= " "
+                if (variablesRaw.name[A_Index] = "true" or variablesRaw.name[A_Index] = "false")
+                    variablesRaw.name[A_Index] .= " "
 
                 value := variablesRaw.value[A_Index]
                 if (variablesRaw.type[A_Index] == "undefined")
@@ -267,12 +293,12 @@ class DebugSession extends Application
                     , value := StrReplace(value, "`n", "``n")
                     , value := StrReplace(value, "`r", "``r")
                     , value := StrReplace(value, "`t", "``t")
-				; FIXME: problem in name is 'true' or 'false'
+                ; FIXME: problem in name is 'true' or 'false'
                 variables.Push({"name": variablesRaw.name[A_Index]
                                ,"type": variablesRaw.type[A_Index]
                                ,"value": value
                                ,"variablesReference"
-							   : variablesRaw.type[A_Index] == "object" 
+                               : variablesRaw.type[A_Index] == "object" 
                             ;    store fullname for inspecting
                                ? this._variableHandles.create([variablesRaw.fullName[A_Index], id[2]])+0 : 0})
                                ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
@@ -280,7 +306,7 @@ class DebugSession extends Application
                     variables[A_Index]["presentationHint"] := {"attributes": ["constant", "readOnly"]}
             }
         }
-		; MsgBox, % fsarr().print(variables)
+        ; MsgBox, % fsarr().print(variables)
 
         response["body"] := {"variables": variables}
 
@@ -319,54 +345,54 @@ class DebugSession extends Application
 
     nextRequest(response, env)
     {
-		this._variableHandles.Reset()
+        this._variableHandles.Reset()
         this._runtime.Next()
         return [response]
     }
 
     stepInRequest(response, env)
     {
-		this._variableHandles.Reset()
+        this._variableHandles.Reset()
         this._runtime.StepIn()
         return [response]
     }
 
     stepOutRequest(response, env)
     {
-		this._variableHandles.Reset()
+        this._variableHandles.Reset()
         this._runtime.StepOut()
         return [response]
     }
 
-	pauseRequest(response, env)
-	{
-		this._variableHandles.Reset()
-		this._runtime.Pause()
-		return [response]
-	}
+    pauseRequest(response, env)
+    {
+        this._variableHandles.Reset()
+        this._runtime.Pause()
+        return [response]
+    }
 
     disconnectRequest(response, env)
     {
         this._runtime.DBGp_CloseDebugger(true)
-		if Util_ProcessExist(this.Dbg_PID)
-			Process, Close, % this.Dbg_PID
-		this.isStart := false
+        if Util_ProcessExist(this.Dbg_PID)
+            Process, Close, % this.Dbg_PID
+        this.isStart := false
 
         if !env.arguments.restart
             env.server.keepRun := false  
         return [response]
     }
 
-	errorResponse(response, env)
-	{
+    errorResponse(response, env)
+    {
         ; TODO: send error info here
-		response.success := "false"
-		return [response]
-	}
+        response.success := "false"
+        return [response]
+    }
 
-	GetBaseFile(path)
-	{
-		SplitPath, % path, name
-		return name
-	}
+    GetBaseFile(path)
+    {
+        SplitPath, % path, name
+        return name
+    }
 }

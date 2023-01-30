@@ -13,3 +13,6 @@ ahkdbg/test
 
 #log
 ahkdbg.log
+
+#bin
+bin

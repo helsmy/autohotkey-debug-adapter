@@ -37,6 +37,7 @@ class AHKRunTime
 		this.currline := 0
 		this.isStart := false
 		this.stoppedReason := "breakpoint"
+		this.defaultExecutable := "C:\Program Files\AutoHotkey\AutoHotkey.exe"
 		dfltExcutable := "C:\Program Files\AutoHotkey\AutoHotkey.exe"
 		RegRead, ahkDir, HKEY_LOCAL_MACHINE\SOFTWARE\AutoHotkey, InstallDir
 		ahkPath :=  ahkDir . "\Autohotkey.exe"
@@ -55,10 +56,12 @@ class AHKRunTime
 		; DebuggerInit
 	}
 
+	; Start DBGp Server and connect to script
 	Start(path, noDebug := false)
 	{
 		; Ensure that some important constants exist
-		this.path := path, szFilename := path,AhkExecutable := this.AhkExecutable ? this.AhkExecutable : "C:\Program Files\AutoHotkey\AutoHotkey.exe"
+		this.path := path, szFilename := path
+		AhkExecutable := this.AhkExecutable
 		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
 		SplitPath, szFilename,, szDir
 
@@ -98,6 +101,33 @@ class AHKRunTime
         ; 立即取回子节点，设置了最大取回两层
         this.SetEnableChildren(true)
 		; Pause
+	}
+
+	; Attach to script(@param program)
+	Attach(program) {
+		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
+		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
+
+		; Find script to attach
+		DetectHiddenWindows On
+		SetTitleMatchMode RegEx
+		titleMatchReg := "i)" StrReplace(program, "\", "\\") " ahk_class AutoHotkey"
+		; MsgBox %titleMatchReg%
+		if (WinExist(titleMatchReg)) 
+			PostMessage DllCall("RegisterWindowMessage", "Str", "AHK_ATTACH_DEBUGGER"), DllCall("ws2_32\inet_addr", "astr", dbgAddr), dbgPort
+		else
+		{
+			DBGp_StopListening(this.Dbg_Socket) ; Script not found, stop listening
+			throw Exception("Fail to attach '" program "'", -1)
+		}
+		this.bIsAttach := true
+		while (this.Dbg_Session == "")
+		{
+			sleep 100
+		}
+		DBGp_StopListening(this.Dbg_Socket) ; stop accepting script connection
+		this.isStart := true
+		this.SetEnableChildren(true)
 	}
 
 	GetPath()

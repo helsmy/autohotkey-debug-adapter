@@ -116,6 +116,15 @@ class ProtocolServer
         this.RH.FinishResponse(result)
     }
 
+	; Resume a respone of a request
+	; For async wait of configuration done
+	ResumeRequest(env_data) 
+	{
+		result := this.application(env_data)
+		if (!!result)
+			this.RH.FinishResponse(result)
+	}
+
 	OnRecv()
 	{
 		ToolTip, Console Input Read!

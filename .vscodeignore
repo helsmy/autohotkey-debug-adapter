@@ -1,6 +1,7 @@
 .vscode/**
 .vscode-test/**
-out/test/**
+out/test/**.js
+out/test/**.js.map
 src/**
 .gitignore
 vsc-extension-quickstart.md
@@ -10,6 +11,6 @@ vsc-extension-quickstart.md
 **/*.ts
 ahkdbg/*.bak
 *.vsix
-ahkdbg/ahkdbg.log
-testdata/*
+ahkdbg
+testdata
 images

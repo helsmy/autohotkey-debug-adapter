@@ -64,10 +64,6 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 }
 
 class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFactory {
-	
-	// The following use of a DebugAdapter factory shows how to control what debug adapter executable is used.
-	// Since the code implements the default behavior, it is absolutely not neccessary and we show it here only for educational purpose.
-
 	createDebugAdapterDescriptor(_session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): ProviderResult<vscode.DebugAdapterDescriptor> {
 		// param "executable" contains the executable optionally specified in the package.json (if any)
 
