@@ -16,7 +16,7 @@
 		"debugger"
 	],
 	"engines": {
-		"vscode": "^1.44.0"
+		"vscode": "^1.77.0"
 	},
 	"categories": [
 		"Debuggers"
@@ -104,7 +104,7 @@
 							"stopOnEntry": {
 								"type": "boolean",
 								"description": "Automatically stop after launch.",
-								"default": true
+								"default": false
 							},
 							"captureStreams": {
 								"type": "boolean",
@@ -169,7 +169,7 @@
 		"@types/glob": "^7.1.1",
 		"@types/mocha": "^8.0.3",
 		"@types/node": "^14.11.5",
-		"@types/vscode": "^1.44.0",
+		"@types/vscode": "^1.77.0",
 		"glob": "^7.1.5",
 		"mocha": "^8.1.3",
 		"tslint": "^5.20.0",
@@ -178,6 +178,5 @@
 		"vscode-test": "^1.4.0",
 		"yarn": "^1.22.18"
 	},
-	"dependencies": {
-	}
+	"dependencies": {}
 }

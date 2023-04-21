@@ -2,27 +2,26 @@
 
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
+import { Logger } from './logger'
+const logger = new Logger();
+
 
 export function activate(context: vscode.ExtensionContext) {
-
-	// context.subscriptions.push(vscode.commands.registerCommand('extension.mock-debug.getProgramName', config => {
-	// 	return vscode.window.showInputBox({
-	// 		placeHolder: "Please enter the name of a markdown file in the workspace folder",
-	// 		value: "readme.md"
-	// 	});
-	// }));
+	logger.info('Activating.');
 
 	// register a configuration provider for 'mock' debug type
 	const provider = new DebugConfigurationProvider();
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('ahkdbg', provider));
 
 	// build debug adapters:
-	let factory = new DebugAdapterExecutableFactory();
+	let factory = new DebugAdapterExecutableFactory(context.extensionMode, context.extensionUri);
 
 	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('ahkdbg', factory));
 	if ('dispose' in factory) {
 		context.subscriptions.push(factory);
 	}
+
+	logger.info('Activated.');
 }
 
 export function deactivate() {
@@ -41,6 +40,7 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor;
 			if (editor && editor.document.languageId === 'ahk') {
+				logger.info('Can not find launch.json. Use default settings.');
 				config.type = 'ahkdbg';
 				config.name = 'Launch';
 				config.request = 'launch';
@@ -58,12 +58,18 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 				return undefined;	// abort launch
 			});
 		}
-
+		logger.info(`Settings: ${JSON.stringify(config)}`);
 		return config;
 	}
 }
 
 class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFactory {
+	constructor(
+		private readonly mode: vscode.ExtensionMode,
+		private readonly extensionUri: vscode.Uri
+	) {
+		
+	} 
 	createDebugAdapterDescriptor(_session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): ProviderResult<vscode.DebugAdapterDescriptor> {
 		// param "executable" contains the executable optionally specified in the package.json (if any)
 
@@ -77,6 +83,13 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 			// const options = {};
 			executable = new vscode.DebugAdapterExecutable(command, args);
 		}
+		// if under dev
+		if (this.mode !== vscode.ExtensionMode.Production) 
+			executable = new vscode.DebugAdapterExecutable(
+				"C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+				[vscode.Uri.joinPath(this.extensionUri, ".\\ahkdbg\\debugadapter.ahk").fsPath]
+			);
+		logger.info(`factory ${JSON.stringify(executable)}`);
 		// make VS Code launch the DA executable
 		return executable;
 	}

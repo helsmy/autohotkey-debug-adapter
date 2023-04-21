@@ -21,6 +21,36 @@ class StdIO
 		; this.outStream := FileOpen("*", "w", "utf-8")
 	}
 
+	ReadStdinAsync(ReadStdinCallback) {
+		static read_handle := DllCall("GetStdHandle", "UInt", -10)
+		static buffer_size := 4096
+		static buffer := DllCall("GlobalAlloc", "UInt", 0x40, "UInt", buffer_size, "Ptr")
+		static bytes_read := 0
+	
+		; Create the overlapped structure
+		VarSetCapacity(overlapped, 20, 0)
+		NumPut(0, overlapped, 0, "UInt") ; Internal
+		NumPut(0, overlapped, 4, "UInt") ; Internal High
+		NumPut(0, overlapped, 8, "UInt") ; Offset
+		NumPut(0, overlapped, 12, "UInt") ; Offset High
+
+		
+		
+		; Check if there is any data available on stdin
+		s := DllCall("ReadFileEx"
+			, "Ptr", read_handle
+			, "Ptr", buffer, "UInt", buffer_size
+			, "Ptr", &overlapped
+			, "Ptr", ReadStdinCallback, "UInt")
+		if (!s) 
+			throw Exception("ReadFileEx Not Succeed", -1)
+		; Check if there was an error reading stdin
+		if (ErrorLevel) {
+			throw Exception("ReadFileEx Error: " ErrorLevel, -1)
+		}
+	}
+	
+
 	SetProcesser(callback) 
 	{
 		this.processer := callback

@@ -42,11 +42,13 @@ class ProtocolServer
 				if (InStr(header, "Content-Length")) 
 				{
 					req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
+					Logger("request length:" req_l)
 					; remove header line and \r\n spliter, 
 					; StrPut会返回带终止\0的长度，所以再额外加1即可
 					this.buffer.LShift(StrPut(line, "UTF-8")+1)
 					req := this.buffer.GetStr(req_l)
 					this.buffer.LShift(req_l)
+					Logger("Got request:" req)
 					EventDispatcher.Put(HOR, req)
 				}
 				else
@@ -105,11 +107,13 @@ class ProtocolServer
 
 	HandleOneRequest(request_data)
     {
+		Logger("Hanlder:" request_data)
         ; Construct environment dictionary using request data
         env := this.RH.ParseRequest(request_data)
 		env.server := this
 		if env.command != "waitConfiguration"
 			logger("VSC -> DA Request: " request_data)
+		Logger("send to reponser: " env.command)
         result := this.application(env)
 
         ; Construct a response and send it back to the client
@@ -171,25 +175,31 @@ class EventDispatcher
 
 	Put(handler, data, immediate := false)
 	{
+		
 		if !immediate
 			this.eventQueue.Push([handler, data])
 		else
 			this.immediateQueue.Push([handler, data])
+		Logger("Put response " this.eventQueue.Length() " for:" data)
 		; Using a single timer ensures that each handler finishes before
 		; the next is called, and that each runs in its own thread.
-		static DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
+		DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
 		SetTimer, % DT, -1
 	}
 
 	DispatchTimer()
 	{
-		static DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
+		DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
 		; Clear immediateQueue array before fire handler of eventQueue
 		if (next := this.immediateQueue.RemoveAt(1))
-			fn := next[1], %fn%(next[2])
+			Logger("fire response for:" next[2]),fn := next[1], %fn%(next[2])
 		; Call exactly one handler per new thread.
-		else if next := this.eventQueue.RemoveAt(1)
-			fn := next[1], %fn%(next[2])
+		else if next := this.eventQueue.RemoveAt(1) {
+			Logger("fire response for:" next[2])
+			fn := next[1]
+			Logger("handler name: " fn.MinParams)
+			fn.Call(next[2])
+		}
 		; If the queue is not empty, reset the timer.
 		if (this.eventQueue.Length() || this.immediateQueue.Length())
 			SetTimer, % DT, -1

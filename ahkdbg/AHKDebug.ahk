@@ -105,8 +105,6 @@ class DebugSession extends Application
         response["command"] := "launch"
         stopOnEntry := (env.arguments.stopOnEntry == "true") ? true : false
         this._runtime.StartRun(stopOnEntry)
-        ; Send a 'Stop on Entry' Stopped event, to make vs code stop on entry
-        ; stoppedEvent := CreateStoppedEvent("entry", DebugSession.THREAD_ID)
 
         return [response]
     }
@@ -133,6 +131,7 @@ class DebugSession extends Application
                 response["body"] := {"error": CreateMessage(-1, "Fail to attach file: '" program "'")}
                 return this.errorResponse(response, env)
             }
+            this.isStart := true
         }
 
         if (!this._configurationDone and !this._timeout)

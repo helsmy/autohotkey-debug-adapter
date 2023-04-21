@@ -1,5 +1,10 @@
 ## Release Notes
 
+### 0.7.0
+1. attach request
+2. improve async respone by adding `ResumeRequest` method
+3. use compressed exe to reduce size
+
 ### 0.6.0
 
 1. improve event queue

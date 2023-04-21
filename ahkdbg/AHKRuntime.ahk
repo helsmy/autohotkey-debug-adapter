@@ -109,12 +109,10 @@ class AHKRunTime
 		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
 
 		; Find script to attach
-		DetectHiddenWindows On
-		SetTitleMatchMode RegEx
-		titleMatchReg := "i)" StrReplace(program, "\", "\\") " ahk_class AutoHotkey"
+		pid := Util_FindRunningProcessID(program)
 		; MsgBox %titleMatchReg%
-		if (WinExist(titleMatchReg)) 
-			PostMessage DllCall("RegisterWindowMessage", "Str", "AHK_ATTACH_DEBUGGER"), DllCall("ws2_32\inet_addr", "astr", dbgAddr), dbgPort
+		if (pid)
+			PostMessage DllCall("RegisterWindowMessage", "Str", "AHK_ATTACH_DEBUGGER"), DllCall("ws2_32\inet_addr", "astr", dbgAddr), dbgPort,, ahk_pid %pid%
 		else
 		{
 			DBGp_StopListening(this.Dbg_Socket) ; Script not found, stop listening
@@ -848,6 +846,23 @@ Util_NodeNameToMapKey(ByRef node)
 	; other is a string key
 	; TODO: handle object key in v2
 	return """" name """"
+}
+
+; 找到对应路径的进程的PID
+Util_FindRunningProcessID(path) 
+{
+	DetectHiddenWindows On
+	for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process") {
+		if (InStr(proc.name, "AutoHotkey", true) == 1) {
+			commandLine := StrSplit(proc.CommandLine, " ")
+			args := commandLine.RemoveAt(1)
+			for _, arg in commandLine {
+				if (InStr(arg, path, false)) 
+					return proc.Handle
+			}
+		}
+	}
+	DetectHiddenWindows Off
 }
 
 ST_ShortName(a)

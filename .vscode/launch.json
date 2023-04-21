@@ -8,14 +8,14 @@
 			"program": "${file}",
 			"stopOnEntry": false,
 			"captureStreams": true,
-			"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+			"AhkExecutable": "",
 			"port": 9005
 		},
 		{
 			"type": "ahkdbg",
-			"request": "launch",
-			"name": "Server",
-			"program": "${workspaceFolder}/ahkdbg/debugAdapter.ahk",
+			"request": "attach",
+			"name": "debugAdapter",
+			"program": "${workspaceFolder}\\ahkdbg\\debugAdapter.ahk",
 			"stopOnEntry": false,
 			"captureStreams": true,
 			"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
@@ -37,7 +37,7 @@
 	"compounds": [
 		{
 			"name": "Extension + Server",
-			"configurations": [ "Extension", "Server" ]
+			"configurations": [ "Extension", "debugAdapter" ]
 		}
 	]
 }

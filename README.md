@@ -17,6 +17,8 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
   ![Conditional breakpoint](images/hitBK.gif)
 * Watch Expression
   ![Watch Expression](images/watch.gif)
+* Attach Script
+  * Support request type `attach` 
 
 ## Using
 
@@ -41,12 +43,12 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 ## Supported Settings of Launch.json
 
 * `type`: always ahkdbg.
-* `request`: always launch.
+* `request`: `launch` or `attach`.
 * `name`: name of a specific setting.
 * `program`: script file to be debugged(by default is file under editing).
 * `stopOnEntry`: stop on entry or not.
 * `captureStreams`: capture io streams or not.
-* `AhkExecutable`: change Default Execute Path(by default is automaticlly acquired through registry, usually is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
+* `AhkExecutable`: change Default Execute Path. If left blank(use "" as value), the value of the item is automatically filled by the language support extension (by default is automaticlly acquired through registry, usually is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
 * `port`: The port on which to listen for XDebug (default: 9005)
 
 
@@ -54,9 +56,16 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 An early version which needs test. Use it at you own risk.
 1. ~~Unsupport for non-ascii characters.~~ (still has bugs about set varibles with non-ascii string)
-2. ~~Breakpoint may can't set or cancel~~ (solution: fixed)
-3. H version can be debugged, but multithread is no supported
-4. The max number of object children to be display is 99.
+2. The max number of object children to be display is 99.
+
+## Build
+
+From 0.7.0 version, extension use a compiled version of debug adapter for a better experence. If any changes of DA is needed, the extension must be built again.
+1. This project use yarn, so first step is: `yarn install`
+2. Set ahk2exe compile option `Base File` to autohotkey v1.36 or above v1 version.
+3. `yarn run package`  
+or if just compile debug adapter (located in `bin\debugAdapter.exe`).  
+   `yarn run precompile`
 
 ## Furture Plan
 
