@@ -92,7 +92,7 @@ class DebugSession extends Application
 
         ; wait until configuration has finished (and configurationDoneRequest has been called)
         ; Async wait by send WaitConfiguration event to event queue
-        if (!this._configurationDone and !this._timeout)
+        if (!this._configurationDone and !this._timeout) ; 
         {
             server := env.server
             CTO := ObjBindMethod(this, "CheckTimeOut")
@@ -205,7 +205,7 @@ class DebugSession extends Application
     {
         frameId := this._variableHandles.get(env.arguments.variablesReference)[2]
         try
-            variable := this._runtime.SetVariable(env.arguments.name, frameId, env.arguments.value)
+            variable := this._runtime.SetVariable(env.arguments.name, frameId, env.arguments.value)[1]
         catch err
         {
             response["body"] := {"error": CreateMessage(-1, err.Message . err.Extra)}
@@ -278,31 +278,30 @@ class DebugSession extends Application
         if (id)
         {
             variablesRaw := this._runtime.CheckVariables(id[1], id[2])
-            Loop % variablesRaw.name.Length()
+            for _, var in variablesRaw 
             {
-                if (variablesRaw.name[A_Index] = "true" or variablesRaw.name[A_Index] = "false")
-                    variablesRaw.name[A_Index] .= " "
+                if (var.name = "true" or var.name = "false")
+                    var.name .= " "
 
-                value := variablesRaw.value[A_Index]
-                if (variablesRaw.type[A_Index] == "undefined")
-                    value := "<undefined>"
-                else if (variablesRaw.type[A_Index] == "string")
-                    value := """" value """"
+                if (var.type == "undefined")
+                    var.value := "<undefined>"
+                else if (var.type == "string")
+                    var.value := """" var.value """"
                     ; replace escape character to original form
-                    , value := StrReplace(value, "`n", "``n")
-                    , value := StrReplace(value, "`r", "``r")
-                    , value := StrReplace(value, "`t", "``t")
+                    , var.value := StrReplace(var.value, "`n", "``n")
+                    , var.value := StrReplace(var.value, "`r", "``r")
+                    , var.value := StrReplace(var.value, "`t", "``t")
                 ; FIXME: problem in name is 'true' or 'false'
-                variables.Push({"name": variablesRaw.name[A_Index]
-                               ,"type": variablesRaw.type[A_Index]
-                               ,"value": value
+                variables.Push({"name": var.name
+                               ,"type": var.type
+                               ,"value": var.value
                                ,"variablesReference"
-                               : variablesRaw.type[A_Index] == "object" 
+                               : var.type == "object" 
                             ;    store fullname for inspecting
-                               ? this._variableHandles.create([variablesRaw.fullName[A_Index], id[2]])+0 : 0})
+                               ? this._variableHandles.create([var.fullName, id[2]])+0 : 0})
                                ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
-                if variablesRaw.facet == "Builtin"
-                    variables[A_Index]["presentationHint"] := {"attributes": ["constant", "readOnly"]}
+                if var.facet == "Builtin"
+                    var["presentationHint"] := {"attributes": ["constant", "readOnly"]}
             }
         }
         ; MsgBox, % fsarr().print(variables)

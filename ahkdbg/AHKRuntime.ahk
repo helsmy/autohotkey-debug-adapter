@@ -110,8 +110,8 @@ class AHKRunTime
 
 		; Find script to attach
 		pid := Util_FindRunningProcessID(program)
-		; MsgBox %titleMatchReg%
 		if (pid)
+			; Reference: https://github.com/zero-plusplus/vscode-autohotkey-debug
 			PostMessage DllCall("RegisterWindowMessage", "Str", "AHK_ATTACH_DEBUGGER"), DllCall("ws2_32\inet_addr", "astr", dbgAddr), dbgPort,, ahk_pid %pid%
 		else
 		{
@@ -124,6 +124,7 @@ class AHKRunTime
 			sleep 100
 		}
 		DBGp_StopListening(this.Dbg_Socket) ; stop accepting script connection
+		this.Dbg_PID := pid
 		this.isStart := true
 		this.SetEnableChildren(true)
 	}
@@ -447,7 +448,7 @@ class AHKRunTime
 		{
 			Dbg_VarIsReadOnly := (dom.selectSingleNode("/response/property/@facet").text = "Builtin")
 			Dbg_VarData := DBGp_Base64UTF8Decode(dom.selectSingleNode("/response/property").text)
-			Dbg_VarData := {"name": [Dbg_NewVarName], "value": [Dbg_VarData], "type": [type]}
+			Dbg_VarData := [{"name": Dbg_NewVarName, "value": Dbg_VarData, "type": type}]
 			;VE_Create(Dbg_VarName, Dbg_VarData, Dbg_VarIsReadOnly)
 		}else
 			Dbg_VarData := this.GetObjectInfoFromDom(dom, frameId)
@@ -482,8 +483,13 @@ class AHKRunTime
 		value := Util_UnpackContNodes(ScopeContext.selectNodes("/response/property"))
 		type := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@type"))
 		facet := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@facet"))
-		logger(A_ThisFunc ": " fsarr().Print(value))
-		return {"name": name, "fullName": name, "value": value, "type": type, "facet": facet}
+		result := []
+		for i, vname in name
+		{
+			varInfo := {"name": name[i], "fullName": name[i], "value": value[i], "type": type[i], "facet": facet[i]}
+			result.Push(varInfo)
+		}
+		return result
 	}
 
 	GetObjectInfoFromDom(ByRef objdom, frameId)
@@ -493,7 +499,7 @@ class AHKRunTime
 		; this.sendEvent(CreateOutputEvent("stdout", root))
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
 		
-		name := [], value := [], type := [], fullName := []
+		variables := []
 		
 		Loop % propertyNodes.length
 		{
@@ -529,10 +535,13 @@ class AHKRunTime
 			else
 				nodeValue := DBGp_Base64UTF8Decode(node.text)
 			; nodeValue := (nodeType == "object") ? "(Object)" : DBGp_Base64UTF8Decode(node.text)
-			name.Push(nodeName), type.Push(nodeType), value.Push(nodeValue), fullName.Push(nodeFullName)
+			variables.Push({  "name": nodeName
+							, "type": nodeType
+							, "value": nodeValue
+							, "fullName": nodeFullName})
 		}
 
-		return {"name": name, "fullName": fullName, "value": value, "type": type}
+		return variables
 	}
 
 	EvaluateVariable(id, frameId) 
@@ -852,11 +861,13 @@ Util_NodeNameToMapKey(ByRef node)
 Util_FindRunningProcessID(path) 
 {
 	DetectHiddenWindows On
+	; process property reference: https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process#properties
 	for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process") {
+		; process start with "AutoHotkey"
 		if (InStr(proc.name, "AutoHotkey", true) == 1) {
 			commandLine := StrSplit(proc.CommandLine, " ")
 			args := commandLine.RemoveAt(1)
-			for _, arg in commandLine {
+			for _, arg in args {
 				if (InStr(arg, path, false)) 
 					return proc.Handle
 			}

@@ -1,14 +1,13 @@
 #SingleInstance Force
 #NoEnv
 #NoTrayIcon
-; SetBatchLines 20ms
+; SetBatchLines -1
 ListLines Off
 SetWorkingDir %A_ScriptDir%
 
 #Include %A_ScriptDir%
 #Include ./AHKDebug.ahk
 
-FileEncoding, utf-8
 isdebug := false
 global hEdit := CreateGui()
 

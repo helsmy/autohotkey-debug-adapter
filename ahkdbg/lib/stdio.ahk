@@ -78,9 +78,13 @@ class StdIO
 		return this.inStream.ReadLine()
 	}
 
-	RawRead(ByRef Var, Bytes)
+	RawRead(Bytes)
 	{
-		this.inStream.RawRead(Var, Bytes)
+		buf := ""
+		VarSetCapacity(buf, Bytes, 0)
+		this.inStream.RawRead(buf, Bytes)
+		str := StrGet(&buf, Bytes, "UTF-8")
+		return str
 	}
 
 	Write(text)
@@ -108,7 +112,7 @@ class StdIO
 	{
 		global hWait
 		this.inStream.Close()
-		this.outStream.Close()
+		; this.outStream.Close()
 		; if (hWait)
 		; 	DllCall("UnregisterWaitEx", "Uint", hWait, "Uint", -1)
 	}

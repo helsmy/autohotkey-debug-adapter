@@ -12,6 +12,7 @@ class ProtocolServer
 		this.RH := new RequestHandler(outStream)
 		this.keepRun := true
 		this.buffer := new StrBuffer(512)
+		this.reqQueue := []
 	}
 
 	SetApp(application)
@@ -21,88 +22,37 @@ class ProtocolServer
 
 	ServeForever()
 	{
-		; this.hStdin := DllCall("GetStdHandle","Uint", -10)
-		; logger("Stdin Handle: " this.hStdin)
-		; this.waitCallback := RegisterCallback("OnStdin")
-		; this.hWait := RegisterWaitForSingleObject(this.hStdin, this.waitCallback, 0)
-		; logger("Wait Object Handle: " this.hWait)
-		HOR := ObjBindMethod(this, "HandleOneRequest")
+		hStdin := DllCall("GetStdHandle","Uint", -10)
+		; while (!A_DebuggerName) {
+		; 	sleep, 20
+		; }
+		; HOR := ObjBindMethod(this, "HandleOneRequest")
 		While (this.keepRun)
 		{
-			r := this.inStream.Read()
-			; Send request to EventDispatcher
-			; hacking way only fit to stdio
-			if (r != "") 
-				this.buffer.WriteStr(r)
-			if (this.buffer.length > 0)
+			bytesAvail := 0
+			bytesRead := 0
+			status1 := DllCall("PeekNamedPipe", "Ptr", hStdin, "Int", 0, "Int", 0, "Int", 0, "Int*", bytesAvail, "Int", 0, "Int")
+			; lastError := DllCall("GetLastError", "int")
+			; if (status1 != 0)
+			; 	throw Exception("System Error Code:" DllCall("GetLastError", "int"))
+			if (bytesAvail != 0) 
 			{
-				line := this.buffer.GetLine()
-				header := Trim(line, "`r`n `t")
-				Logger("header: " header)
-				if (InStr(header, "Content-Length")) 
-				{
-					req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
-					Logger("request length:" req_l)
-					; remove header line and \r\n spliter, 
-					; StrPut会返回带终止\0的长度，所以再额外加1即可
-					this.buffer.LShift(StrPut(line, "UTF-8")+1)
-					req := this.buffer.GetStr(req_l)
-					this.buffer.LShift(req_l)
-					Logger("Got request:" req)
-					EventDispatcher.Put(HOR, req)
-				}
-				else
-					; skip unknow request
-					this.buffer.LShift(StrPut(line, "UTF-8") - 1)
+				header := this.inStream.ReadLine()
+				reqLen := Trim(SubStr(header, 17), " `t`r`n") & -1
+				this.inStream.ReadLine()
+				req := this.inStream.RawRead(reqLen)
+				this.reqQueue.Push(req)
+				; check if there are next request
+				continue
 			}
-			; else
-			; 	Sleep 20
-			; while (r)
-			; {
-			; 	; Logger("Stdin Full: " r)
-			; 	header := StrSplit(r, "`r`n`r`n",,2)
-			; 	; Logger("Header: " header[1])
-			; 	r := header[2]
-			; 	header := header[1]
-			; 	; What a difficult thing to make sure converting is right in v1 OTZ
-			; 	req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
-			; 	cap := StrPut(r, "utf-8")
-			; 	VarSetCapacity(buffer, cap)
-			; 	StrPut(r, &buffer, cap, "utf-8")
-			; 	req := StrGet(&buffer, req_l+0, "utf-8")
-			; 	; Send request to EventDispatcher
-			; 	; FIXME: UTF-8 block dispatcher
-			; 	if (!!req)
-			; 		EventDispatcher.Put(HOR, req)
-			; }
+
+			while (request_data := this.reqQueue.RemoveAt(1)) 
+			{
+				this.HandleOneRequest(request_data)
+				; continue
+			}
 			; sleep 20
 		}
-		; DllCall("UnregisterWaitEx", "Uint", this.hWait, "Uint", -1)
-		; this.hWait := 0
-
-	}
-
-	STDINCallBack(header)
-	{
-		HOR := ObjBindMethod(this, "HandleOneRequest")
-		this.buffer.WriteStr(header)
-		header := this.buffer.GetLine()
-		if (InStr(header, "Content-Length")) 
-		{
-			req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
-			this.inStream.RawRead(r, req_l+2)
-			this.buffer.Write(&r)
-			; remove header line and \r\n spliter, 
-			; StrPut会返回带终止\0的长度，所以再额外加1即可
-			this.buffer.LShift(StrPut(line, "UTF-8")+1)
-			req := this.buffer.GetStr(req_l)
-			this.buffer.LShift(req_l)
-			EventDispatcher.Put(HOR, req)
-		}
-		else
-			; skip unknow request
-			this.buffer.LShift(StrPut(line, "UTF-8") - 1)
-		
 	}
 
 	HandleOneRequest(request_data)
@@ -127,33 +77,6 @@ class ProtocolServer
 		result := this.application(env_data)
 		if (!!result)
 			this.RH.FinishResponse(result)
-	}
-
-	OnRecv()
-	{
-		ToolTip, Console Input Read!
-		DllCall("UnregisterWaitEx", "Uint", this.hWait, "Uint", -1)
-		this.hWait := 0
-		HOR := ObjBindMethod(this, "HandleOneRequest")
-		r := this.inStream.Read()
-		; this.hWait := RegisterWaitForSingleObject(this.hStdin, this.waitCallback, 0)
-		logger(r)
-		; Send request to EventDispatcher
-		; hacking way only fit to stdio
-		while (r)
-		{
-			header := StrSplit(r, "`r`n`r`n",,2)
-			r := header[2]
-			header := header[1]
-			; What a difficult thing to make sure converting is right in v1 OTZ
-			req_l := Trim(SubStr(header, 17), " `t`r`n") & -1
-			StrPut(r, &buffer, req_l, "utf-8")
-			req := StrGet(&buffer, req_l+0, "utf-8")
-			; Send request to EventDispatcher
-			; FIXME: UTF-8 block dispatcher
-			if (!!req)
-				EventDispatcher.Put(HOR, req)
-		}
 	}
 
 	HandleEvent(event)
@@ -291,34 +214,4 @@ MakeServer(server_address, application)
 	EventDispatcher.On("recv", ObjBindMethod(server, "OnRecv"))
     server.SetApp(application)
     return server
-}
-
-RegisterWaitForSingleObject(waitObject, waitCallBack, state, timeout := -1, execOption := true)
-{
-    VarSetCapacity(hWait, 16, 0)
-    ; WT_EXECUTEONLYONCE: 0x00000008, WT_EXECUTEDEFAULT: 0
-    execOption := executeOnlyOnce ? 0x00000008 : 0x00000000      
-    if (DllCall("RegisterWaitForSingleObject", "UInt", &hWait
-                    , "Uint", waitObject
-                    , "Uint", waitCallback
-                    , "Uint", state
-                    , "Uint", timeout
-                    , "Uint", execOption) == 0)
-    {
-        throw Exception("RegisterWaitForSingleObject Error" , -1, "Error Code: " DllCall("GetLastError"))
-    }
-	; logger("Function hWait: " hWait)
-    return NumGet(hWait)+0
-}
-
-OnStdin(lpParameter, TimerOrWaitFired) 
-{
-	CallBackStd()
-}
-
-CallBackStd()
-{
-	; stdin := FileOpen("*", "r")
-	EventDispatcher.EmitImmediately("recv", "")
-	
 }
