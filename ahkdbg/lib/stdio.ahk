@@ -21,7 +21,7 @@ class StdIO
 		; this.outStream := FileOpen("*", "w", "utf-8")
 	}
 
-	ReadStdinAsync(ReadStdinCallback) {
+	ReadStdinAsync() {
 		static read_handle := DllCall("GetStdHandle", "UInt", -10)
 		static buffer_size := 4096
 		static buffer := DllCall("GlobalAlloc", "UInt", 0x40, "UInt", buffer_size, "Ptr")
@@ -29,19 +29,19 @@ class StdIO
 	
 		; Create the overlapped structure
 		VarSetCapacity(overlapped, 20, 0)
-		NumPut(0, overlapped, 0, "UInt") ; Internal
-		NumPut(0, overlapped, 4, "UInt") ; Internal High
-		NumPut(0, overlapped, 8, "UInt") ; Offset
+		NumPut(0, overlapped, 0, "UInt")  ; Internal
+		NumPut(0, overlapped, 4, "UInt")  ; Internal High
+		NumPut(0, overlapped, 8, "UInt")  ; Offset
 		NumPut(0, overlapped, 12, "UInt") ; Offset High
+		NumPut(0, overlapped, 16, "UInt") ; hEvent
+		rscb := RegisterCallback("ReadStdinCallback")
 
-		
-		
 		; Check if there is any data available on stdin
 		s := DllCall("ReadFileEx"
 			, "Ptr", read_handle
 			, "Ptr", buffer, "UInt", buffer_size
-			, "Ptr", &overlapped
-			, "Ptr", ReadStdinCallback, "UInt")
+			, "Ptr", buffer
+			, "Ptr", rscb, "UInt")
 		if (!s) 
 			throw Exception("ReadFileEx Not Succeed", -1)
 		; Check if there was an error reading stdin
@@ -61,10 +61,10 @@ class StdIO
 		this.processer(s)
 	}
 
-	IoCompletionCallback(dwErrorCode, dwNumberOfBytesTransfered, lpOverlapped)
-	{
-		ToolTip, % "ErrorCode: " ErrorCode " BytesTransfered: " dwNumberOfBytesTransfered
-	}
+	; IoCompletionCallback(dwErrorCode, dwNumberOfBytesTransfered, lpOverlapped)
+	; {
+	; 	ToolTip, % "ErrorCode: " ErrorCode " BytesTransfered: " dwNumberOfBytesTransfered
+	; }
 
 	Read(count := 0)
 	{
@@ -87,11 +87,11 @@ class StdIO
 		return str
 	}
 
-	Write(text)
+	Write(byref text)
 	{
 		; Some problem in call write method of outStream
 		; Raw write to stdout by fileappend
-		FileAppend, % text, *, CP65001
+		FileAppend %text%, *, UTF-8-RAW
 
 		; outStream := FileOpen("*", "w `n", "utf-8")
 		; VarSetCapacity(ps, StrLen(text)*3, 0)
@@ -118,7 +118,11 @@ class StdIO
 	}
 }
 
-
+ReadStdinCallback(dwErr, cbBytesRead, lpOverLap) 
+{
+	str := StrGet(lpOverLap, cbBytesRead, "UTF-8")
+	MsgBox %str%
+}
 
 ; OnStdin(lpParameter, TimerOrWaitFired) 
 ; {

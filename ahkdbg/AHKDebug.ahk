@@ -1,9 +1,8 @@
-﻿#Include %A_ScriptDir%
-#Include <jsonlib>
+﻿#Include <jsonlib>
 #Include <stdio>
 #Include <handles>
 #Include <event>
-#Include <protocolserver>
+#Include ./protocolserver.ahk
 #Include <application>
 #Include ./AHKRuntime.ahk
 
@@ -55,6 +54,8 @@ class DebugSession extends Application
     configurationDoneRequest(response, env)
     {
         this._configurationDone := true
+        ; Eimt event to continue the response of launch request
+        EventDispatcher.EmitImmediately("configurationDone", "")
 
         return [response]
     }
@@ -95,10 +96,15 @@ class DebugSession extends Application
         if (!this._configurationDone and !this._timeout) ; 
         {
             server := env.server
-            CTO := ObjBindMethod(this, "CheckTimeOut")
-            SetTimer, % CTO, -1000
-            RR := ObjBindMethod(server, "ResumeRequest")
-            EventDispatcher.Put(RR, env)
+            if (!this.isStart) 
+            {
+                CTO := ObjBindMethod(this, "CheckTimeOut")
+                SetTimer, % CTO, -1000
+            }
+            ; Pause the respones of launch request by return empty
+            ; Wait for configrationDone request to emit the event
+            RR := ObjBindMethod(server, "ResumeRequest", env)
+            EventDispatcher.On("configurationDone", RR)
             return
         }
 
@@ -318,7 +324,7 @@ class DebugSession extends Application
         frameId := env.arguments.frameId
         body := {}
         varibleInfo := this._runtime.EvaluateVariable(varName, frameId)
-        logger(fsarr().print(varibleInfo))
+        ; logger(fsarr().print(varibleInfo))
         var_type := varibleInfo["type"]
         result := varibleInfo["value"]
         if (var_type == "undefined")
@@ -372,8 +378,8 @@ class DebugSession extends Application
     disconnectRequest(response, env)
     {
         this._runtime.DBGp_CloseDebugger(true)
-        if Util_ProcessExist(this.Dbg_PID)
-            Process, Close, % this.Dbg_PID
+        if Util_ProcessExist(this._runtime.Dbg_PID)
+            Process, Close, % this._runtime.Dbg_PID
         this.isStart := false
 
         if !env.arguments.restart

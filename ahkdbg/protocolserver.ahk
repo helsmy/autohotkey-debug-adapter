@@ -2,7 +2,6 @@
 #Include <fsarr>
 #Include <stdio>
 #Include <logger>
-#Include <StrBuffer>
 
 class ProtocolServer
 {
@@ -35,7 +34,7 @@ class ProtocolServer
 			; lastError := DllCall("GetLastError", "int")
 			; if (status1 != 0)
 			; 	throw Exception("System Error Code:" DllCall("GetLastError", "int"))
-			if (bytesAvail != 0) 
+			while (bytesAvail > 0) 
 			{
 				header := this.inStream.ReadLine()
 				reqLen := Trim(SubStr(header, 17), " `t`r`n") & -1
@@ -43,6 +42,7 @@ class ProtocolServer
 				req := this.inStream.RawRead(reqLen)
 				this.reqQueue.Push(req)
 				; check if there are next request
+				bytesAvail -= StrLen(header)+2+reqLen
 				continue
 			}
 
@@ -51,7 +51,8 @@ class ProtocolServer
 				this.HandleOneRequest(request_data)
 				; continue
 			}
-			; sleep 20
+			; Avoid smashing cpu
+			sleep 10
 		}
 	}
 

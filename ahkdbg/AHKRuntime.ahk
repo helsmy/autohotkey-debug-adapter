@@ -1,4 +1,4 @@
-#Include <protocolserver>
+#Include ./protocolserver.ahk
 #Include <DBGp>
 #Include <event>
 
@@ -224,7 +224,8 @@ class AHKRunTime
 			this.Dbg_Session.stop()
 				; throw Exception("Debug session stop fail.", -1)
 			this.Dbg_Session.Close()
-		}else ; nope, we're not on a break, kill the process
+		}
+		else ; nope, we're not on a break, kill the process
 		{
 			this.Dbg_Session.Close()
 			Process, Close, %Dbg_PID%
@@ -616,8 +617,8 @@ class AHKRunTime
 		aStackFile  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@filename"))
 		aStackLine  := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@lineno"))
 		aStackLevel := Util_UnpackNodes(this.Dbg_Stack.selectNodes("/response/stack/@level"))
-		Loop, % aStackFile.Length()
-			aStackFile[A_Index] := DBGp_DecodeFileURI(aStackFile[A_Index])
+		for i, file in aStackFile
+			aStackFile[i] := DBGp_DecodeFileURI(file)
 
 		return {"file": aStackFile, "line": aStackLine, "where": aStackWhere, "level": aStackLevel}
 	}
@@ -735,7 +736,6 @@ Util_UnpackContNodes(nodes)
 	Loop, % nodes.length
 		node := nodes.item[A_Index-1]
 		,o.Insert(node.attributes.getNamedItem("type").text != "object" ? DBGp_Base64UTF8Decode(node.text) : Util_UnpackObjValue(node, A_Index))
-	logger(A_ThisFunc ": " fsarr().Print(o))
 	return o
 }
 
@@ -858,22 +858,19 @@ Util_NodeNameToMapKey(ByRef node)
 }
 
 ; 找到对应路径的进程的PID
-Util_FindRunningProcessID(path) 
+Util_FindRunningProcessID(path)
 {
-	DetectHiddenWindows On
 	; process property reference: https://learn.microsoft.com/en-us/windows/win32/cimwin32prov/win32-process#properties
-	for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process") {
+	for proc in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process") 
+	{
 		; process start with "AutoHotkey"
-		if (InStr(proc.name, "AutoHotkey", true) == 1) {
-			commandLine := StrSplit(proc.CommandLine, " ")
-			args := commandLine.RemoveAt(1)
-			for _, arg in args {
-				if (InStr(arg, path, false)) 
-					return proc.Handle
-			}
+		if (InStr(proc.name, "AutoHotkey", true) == 1) 
+		{
+			commandLine := proc.CommandLine
+			if (InStr(commandLine, path)) 
+				return proc.ProcessId
 		}
 	}
-	DetectHiddenWindows Off
 }
 
 ST_ShortName(a)
