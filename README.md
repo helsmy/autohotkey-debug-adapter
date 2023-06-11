@@ -55,8 +55,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 ## Known Issues
 
 An early version which needs test. Use it at you own risk.
-1. ~~Unsupport for non-ascii characters.~~ (still has bugs about set varibles with non-ascii string)
-2. The max number of object children to be display is 99.
+1. The max number of object children to be display is 99.
 
 ## Build
 

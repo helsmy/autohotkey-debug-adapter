@@ -1,5 +1,11 @@
 ## Release Notes
 
+### 0.7.1
+
+1. use win32 process com to aquire the pid of script to attach
+2. better way to hanlde launch request
+3. better way for non-block reading stdin
+
 ### 0.7.0
 1. attach request
 2. improve async respone by adding `ResumeRequest` method
