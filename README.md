@@ -1,4 +1,5 @@
 # AutoHotKey Debug
+![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/helsmy.autohotkey-debug?style=for-the-badge&logo=visualstudiocode&label=Extension%20Install) ![](https://img.shields.io/badge/Compatibility-autohotkey%201.1.37.01-green?style=for-the-badge&logo=autohotkey) ![](https://img.shields.io/badge/Compatibility-autohotkey%202.0.11-green?style=for-the-badge&logo=autohotkey) ![](https://img.shields.io/badge/Compatibility-autohotkey%20H-green?style=for-the-badge&logo=autohotkey)
 
 Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
