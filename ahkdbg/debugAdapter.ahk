@@ -1,7 +1,8 @@
 #SingleInstance Force
 #NoEnv
 #NoTrayIcon
-; SetBatchLines -1
+#Requires AutoHotkey v1.1.36+
+SetBatchLines -1
 ListLines Off
 SetWorkingDir %A_ScriptDir%
 

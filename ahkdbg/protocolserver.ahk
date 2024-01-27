@@ -1,4 +1,4 @@
-#Include <jsonlib>
+#Include <JSON>
 #Include <fsarr>
 #Include <stdio>
 #Include <logger>
@@ -22,6 +22,8 @@ class ProtocolServer
 	ServeForever()
 	{
 		hStdin := DllCall("GetStdHandle","Uint", -10)
+		; Let cJson return boolen in Json way
+		JSON.BoolsAsInts := true
 		; while (!A_DebuggerName) {
 		; 	sleep, 20
 		; }
@@ -154,7 +156,7 @@ class RequestHandler
 
     ParseRequest(request_data)
     {
-        return JSON.ToObj(request_data)
+        return JSON.Load(request_data)
     }
 
     FinishResponse(result)
@@ -178,9 +180,7 @@ class RequestHandler
 	{
 		response["seq"] := this.seq
 		; responseStr := JSON.FromObj(response)
-		responseStr := fsarr().print(response)
-		responseStr := StrReplace(responseStr, """true""" , "true")
-		responseStr := StrReplace(responseStr, """false""" , "false")
+		responseStr := JSON.Dump(response)
 		responseStr := this.ReplaceControlChr(responseStr, (response["type"] != "event"))
 		if response.type == "event"
 			logger("DA -> VSC event: " responseStr)

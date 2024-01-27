@@ -337,7 +337,7 @@ class AHKRunTime
 		uri := DBGp_EncodeFileURI(path)
 		bk := this.GetBk(uri, bkinfo.line+0)
 		if !this.isStart
-			return {"verified": "false", "line": line, "id": bk.id}
+			return {"verified": JSON.false, "line": line, "id": bk.id}
 
 		; if breakpoint exists, update condition
 		if !!bk
@@ -345,7 +345,7 @@ class AHKRunTime
 			for cond, val in bkinfo
 				bk["cond"][cond] := val
 			this.EnableBK(bk.id)
-			return {"verified": "true", "line": bkinfo.line, "id": bk.id, "source": path}
+			return {"verified": JSON.true, "line": bkinfo.line, "id": bk.id, "source": path}
 		}
 		
 		; TODO: verify conditional breakpoint args 
@@ -371,7 +371,7 @@ class AHKRunTime
 		this.AddBk(sourceUri, line, bkID, bkinfo)
 		this.bInBkProcess := false
 
-		return {"verified": "true", "line": line, "id": bkID, "source": sourcePath}
+		return {"verified": JSON.true, "line": line, "id": bkID, "source": sourcePath}
 	}
 
 	DeleteBreakpoint(path, bkCheckDict)
@@ -394,7 +394,7 @@ class AHKRunTime
 		uri := DBGp_EncodeFileURI(path)
 		
 		for line, bk in this.Dbg_BkList[uri]
-			this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("true", bk.id, line, , path)))
+			this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint(JSON.true, bk.id, line, , path)))
 	}
 
 	IsNeedConditionalContiune()
@@ -675,7 +675,7 @@ class AHKRunTime
 		bkID := this.GetBk(uri, line)["id"]
 		this.Dbg_Session.breakpoint_update("-s disabled -d " bkID, Dbg_Response)
 		; this.Dbg_BkList[uri].Delete(line)
-		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
+		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint(JSON.false, bkID, line)))
 	}
 
 	RemoveBk(uri, line)
@@ -684,7 +684,7 @@ class AHKRunTime
 		bkID := this.GetBk(uri, line)["id"]
 		this.Dbg_Session.breakpoint_remove("-d " bkID, Dbg_Response)
 		this.Dbg_BkList[uri].Delete(line)
-		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint("false", bkID, line)))
+		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint(JSON.false, bkID, line)))
 	}
 
 	SendEvent(event)
@@ -841,8 +841,14 @@ Util_NodeTextToStr(ByRef node)
 				return "[...]"
 			return "{...}"
 		default:
+			; MsgBox % node.attributes.getNamedItem("name").text
 		; TODO: send error message to vscode
-			throw Exception("Wrong respone node type: " node.attributes.getNamedItem("type").text, -1)
+			; MsgBox % DBGp_Base64UTF8Decode(node.text)
+			stack := ""
+			loop 5 
+				stack .= Exception("",-1-A_Index).What "`n"
+			MsgBox % stack
+			throw Exception("Wrong respone node type: " node.attributes.getNamedItem("type").text, -1, stack)
 	}
 }
 

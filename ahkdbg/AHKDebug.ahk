@@ -1,4 +1,4 @@
-﻿#Include <jsonlib>
+﻿#Include <JSON>
 #Include <stdio>
 #Include <handles>
 #Include <event>
@@ -29,14 +29,14 @@ class DebugSession extends Application
     {
         ; body
         response["body"] := {}
-        response.body["supportsConfigurationDoneRequest"] := "true"
-        response.body["supportsSetVariable"] := "true"
-        response.body["supportsClipboardContext"] := "true"
+        response.body["supportsConfigurationDoneRequest"] := JSON.true
+        response.body["supportsSetVariable"] := JSON.true
+        response.body["supportsClipboardContext"] := JSON.true
         ; experimental features
-        response.body["supportsHitConditionalBreakpoints"] := "true"
-        ; response.body["supportsEvaluateForHovers"] := "true"
-        ; response.body["supportsFunctionBreakpoints"] := "true"
-        ; response.body["supportsBreakpointLocationsRequest"] := "true"
+        response.body["supportsHitConditionalBreakpoints"] := JSON.true
+        ; response.body["supportsEvaluateForHovers"] := JSON.true
+        ; response.body["supportsFunctionBreakpoints"] := JSON.true
+        ; response.body["supportsBreakpointLocationsRequest"] := JSON.true
 
         InitializedEvent := {"type": "event", "event": "initialized"}
         switch env.arguments.pathFormat
@@ -70,10 +70,10 @@ class DebugSession extends Application
                 response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
-            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
+            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
             this._runtime.dbgPort := env.arguments.port
-            noDebug := (env.arguments.noDebug == "true") ? true : false
+            noDebug := (env.arguments.noDebug == JSON.true) ? true : false
             try
                 this._runtime.Start(env.arguments.program, noDebug)
             catch e
@@ -109,7 +109,7 @@ class DebugSession extends Application
         }
 
         response["command"] := "launch"
-        stopOnEntry := (env.arguments.stopOnEntry == "true") ? true : false
+        stopOnEntry := (env.arguments.stopOnEntry == JSON.true) ? true : false
         this._runtime.StartRun(stopOnEntry)
 
         return [response]
@@ -126,7 +126,7 @@ class DebugSession extends Application
                 response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
-            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == "true") ? true : false
+            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
             this._runtime.AhkExecutable := FileExist(runtime) ? runtime : this._runtime.AhkExecutable
             this._runtime.dbgPort := port
             
@@ -176,7 +176,7 @@ class DebugSession extends Application
                 actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, , source)) ;
             }
             catch err
-                actualBreakpoints.Push(CreateBreakpoint("false",, bkinfo.line+0, 0, path, err.Extra))
+                actualBreakpoints.Push(CreateBreakpoint(JSON.false,, bkinfo.line+0, 0, path, err.Extra))
             finally
                 bkcheckdict[bkp.line] := ""
         }
@@ -268,8 +268,8 @@ class DebugSession extends Application
         frameId := env.arguments.frameId
         response["body"] := {}
         ; Since ahk always keeps two scopes(Local, Global), just return them
-        response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(["Local", frameId]), "expensive": "false"}
-                                  , {"name": "Global", "variablesReference": this._variableHandles.create(["Global", "None"]), "expensive": "true"}]
+        response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(["Local", frameId]), "expensive": JSON.false}
+                                  , {"name": "Global", "variablesReference": this._variableHandles.create(["Global", "None"]), "expensive": JSON.true}]
         return [response]
     }
 
@@ -286,8 +286,8 @@ class DebugSession extends Application
             variablesRaw := this._runtime.CheckVariables(id[1], id[2])
             for _, var in variablesRaw 
             {
-                if (var.name = "true" or var.name = "false")
-                    var.name .= " "
+                ; if (var.name = "true" or var.name = "false")
+                ;     var.name .= " "
 
                 if (var.type == "undefined")
                     var.value := "<undefined>"
@@ -390,7 +390,7 @@ class DebugSession extends Application
     errorResponse(response, env)
     {
         ; TODO: send error info here
-        response.success := "false"
+        response.success := JSON.false
         return [response]
     }
 

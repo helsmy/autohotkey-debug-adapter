@@ -21,7 +21,7 @@ class Application
 		response["type"] := "response"
 		; Fuck weakly typed!
 		response["request_seq"] := env.seq+0
-		response["success"] := "true"
+		response["success"] := JSON.true
 		response["command"] := env.command
 		; MsgBox % handlerName
 		if !!this[handlerName]

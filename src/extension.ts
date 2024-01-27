@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 import { Logger } from './logger'
+import { join } from 'path';
 const logger = new Logger();
 
 
@@ -86,7 +87,7 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 		// if under dev
 		if (this.mode !== vscode.ExtensionMode.Production) 
 			executable = new vscode.DebugAdapterExecutable(
-				"C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+				join('C:', 'Program Files', 'AutoHotkey', 'v1.1.37.01', 'AutoHotkeyU64.exe'),
 				[vscode.Uri.joinPath(this.extensionUri, ".\\ahkdbg\\debugadapter.ahk").fsPath]
 			);
 		logger.info(`factory ${JSON.stringify(executable)}`);
