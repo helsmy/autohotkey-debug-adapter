@@ -33,6 +33,12 @@ GlobalErrorHandler(exception)
     EventDispatcher.EmitImmediately("sendEvent", CreateTerminatedEvent())
 }
 
+; WaitDebugger() {
+;     while (!A_DebuggerName) {
+;         sleep, 20
+;     }
+; }
+
 
 ; CreateGui()
 ; {

@@ -39,6 +39,7 @@ class AHKRunTime
 		this.currline := 0
 		this.isStart := false
 		this.stoppedReason := "breakpoint"
+		this.globalContextId := 1
 		this.defaultExecutable := "C:\Program Files\AutoHotkey\AutoHotkey.exe"
 		dfltExcutable := "C:\Program Files\AutoHotkey\AutoHotkey.exe"
 		RegRead, ahkDir, HKEY_LOCAL_MACHINE\SOFTWARE\AutoHotkey, InstallDir
@@ -258,7 +259,9 @@ class AHKRunTime
 		this.Dbg_Session := session ; store the session ID in a global variable
 		dom := loadXML(init)
 		this.Dbg_Lang := dom.selectSingleNode("/init/@language").text
-		session.property_set("-n A_DebuggerName -- " DBGp_Base64UTF8Encode(this.clientArgs.clientID))
+		session.property_set("-n A_DebuggerName -c 1 -- " DBGp_Base64UTF8Encode(this.clientArgs.clientID))
+		; in case H version
+		session.property_set("-n A_DebuggerName -c 2 -- " DBGp_Base64UTF8Encode(this.clientArgs.clientID))
 		session.feature_set("-n max_data -v " this.dbgMaxData)
 		this.SetEnableChildren(false)
 		if this.dbgCaptureStreams
@@ -496,7 +499,7 @@ class AHKRunTime
 			this.Dbg_Session.property_get("-n " . Dbg_VarName . " -d " . frameId, Dbg_Response)
 		else
 		; context id of a global variable is 1
-			this.Dbg_Session.property_get("-c 1 -n " Dbg_VarName, Dbg_Response)
+			this.Dbg_Session.property_get("-c " this.globalContextId " -n " Dbg_VarName, Dbg_Response)
 		logger(Dbg_Response)
 		; this.SetEnableChildren(false)
 		dom := loadXML(Dbg_Response)
@@ -528,7 +531,7 @@ class AHKRunTime
 		if (this.enableChildren == false)
 			this.SetEnableChildren(true)
 		if (id == "Global")
-			id := "-c 1"
+			id := "-c " this.globalContextId
 		else if (id == "Local")
 			id := "-d " . frameId . " -c 0"
 		else
@@ -541,8 +544,10 @@ class AHKRunTime
 		; H version store global in context id=2
 		; and no extra feature_name can be used to 
 		; confirm H version
-		if (!InStr(ScopeContext, "</property>") && id == "-c 1")
+		if (!InStr(ScopeContext, "</property>") && id == "-c 1") {
+			this.globalContextId := 2
 			this.Dbg_Session.context_get("-c 2", ScopeContext)
+		}
 		logger(ScopeContext)
 		return this.UnpackFrameVar(loadXML(ScopeContext), frameId)
 	}
@@ -605,7 +610,7 @@ class AHKRunTime
 			this.Dbg_Session.property_get("-n " id " -d "  frameId, Dbg_Response)
 		else
 		; context id of a global variable is 1
-			this.Dbg_Session.property_get("-c 1 -n " id, Dbg_Response)
+			this.Dbg_Session.property_get("-c " this.globalContextId " -n " id, Dbg_Response)
 
 		dom := loadXML(Dbg_Response)
 		logger(Dbg_Response)
@@ -642,7 +647,7 @@ class AHKRunTime
 			cmd := "-n " varFullName " -d " frameId " -t " type " -- "
 		else
 		; context id of a global variable is 1
-			cmd := "-c 1 -n " varFullName " -t " type " -- "
+			cmd := "-c " this.globalContextId " -n " varFullName " -t " type " -- "
 
 		this.Dbg_Session.property_set(cmd . DBGp_Base64UTF8Encode(value), Dbg_Response)
 		if !InStr(Dbg_Response, "success=""1""")
