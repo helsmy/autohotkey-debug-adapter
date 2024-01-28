@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
- *  Licensed under the MIT License. See License.txt in the project root for license information.
+ * Modified for this project from Microsoft Example under MIT
+ * E2E Test for debug adapter 
  *--------------------------------------------------------------------------------------------*/
 
 "use strict";
@@ -17,12 +17,13 @@ suite('Node Debug Adapter', () => {
 
 	const DEBUG_ADAPTER = Path.join(PROJECT_ROOT, 'ahkdbg', 'debugAdapter.ahk');
     const RUNTIME = Path.join(PROJECT_ROOT, '/bin/AutoHotkey.exe')
+	const BIN_DEBUG_ADAPTER = Path.join(PROJECT_ROOT, 'bin', 'debugAdapter.exe');
 
 
 	let dc: DebugClient;
 
 	setup( () => {
-		dc = new DebugClient(RUNTIME, DEBUG_ADAPTER, 'ahkdbg');
+		dc = new DebugClient(BIN_DEBUG_ADAPTER, "", 'ahkdbg');
 		return dc.start();
 	});
 
@@ -58,14 +59,16 @@ suite('Node Debug Adapter', () => {
 	});
 
 	suite('launch', () => {
-
-		test('should run program to the end', () => {
+		test('should run program to the end', async () => {
 
 			const PROGRAM = Path.join(DATA_ROOT, 'simple/simple.ahk');
 
 			return Promise.all([
 				dc.configurationSequence(),
-				dc.launch({ program: PROGRAM }),
+				dc.launch({
+					program: PROGRAM , 
+					AhkExecutable: RUNTIME
+				}),
 				dc.waitForEvent('terminated')
 			]);
 		});
@@ -77,7 +80,7 @@ suite('Node Debug Adapter', () => {
 
 			return Promise.all([
 				dc.configurationSequence(),
-				dc.launch({ program: PROGRAM, stopOnEntry: true }),
+				dc.launch({ program: PROGRAM, stopOnEntry: true, AhkExecutable: RUNTIME}),
 				dc.assertStoppedLocation('entry', { line: DEBUGGER_LINE })
 			]);
 		});
@@ -89,7 +92,7 @@ suite('Node Debug Adapter', () => {
 		const BREAKPOINT_LINE = 13;
 
 		test('should stop on a breakpoint', () => {
-			return dc.hitBreakpoint({ program: PROGRAM }, { path: PROGRAM, line: BREAKPOINT_LINE } );
+			return dc.hitBreakpoint({ program: PROGRAM, AhkExecutable: RUNTIME }, { path: PROGRAM, line: BREAKPOINT_LINE } );
 		});
 	});
 
@@ -100,7 +103,7 @@ suite('Node Debug Adapter', () => {
 		test('stdout and stderr events should be complete and in correct order', () => {
 			return Promise.all([
 				dc.configurationSequence(),
-				dc.launch({ program: PROGRAM }),
+				dc.launch({ program: PROGRAM, AhkExecutable: RUNTIME, captureStreams: true }),
                 dc.continueRequest({threadId: 1}),
 				dc.assertOutput('stdout', "Hello stdout 0\nHello stdout 1\nHello stdout 2\n"),
 				dc.assertOutput('stderr', "Hello stderr 0\nHello stderr 1\nHello stderr 2\n")

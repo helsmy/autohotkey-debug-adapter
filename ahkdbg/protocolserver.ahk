@@ -22,8 +22,6 @@ class ProtocolServer
 	ServeForever()
 	{
 		hStdin := DllCall("GetStdHandle","Uint", -10)
-		; Let cJson return boolen in Json way
-		JSON.BoolsAsInts := true
 		; while (!A_DebuggerName) {
 		; 	sleep, 20
 		; }

@@ -8,10 +8,13 @@ SetWorkingDir %A_ScriptDir%
 
 #Include %A_ScriptDir%
 #Include ./AHKDebug.ahk
+#Include <JSON>
 
 isdebug := false
 ; global hEdit := CreateGui()
 
+; Let cJson return boolen in Json way
+JSON.BoolsAsInts := false
 IOStream := new StdIO()
 SERVER_ADDRESS := [IOStream, IOStream]
 module := new DebugSession()
