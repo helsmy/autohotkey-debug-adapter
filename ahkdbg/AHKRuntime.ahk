@@ -1,4 +1,5 @@
 #Include ./protocolserver.ahk
+#Include ./AHKBKManger.ahk
 #Include <DBGp>
 #Include <event>
 
@@ -32,7 +33,7 @@ class AHKRunTime
 		this.bIsAttach := false
 		this.dbgCaptureStreams := false
 		this.Dbg_Session := ""
-		this.Dbg_BkList := {}
+		this.BkManger := new BreakPointManger()
 		this.dbgMaxChildren := 99+0
 		this.currline := 0
 		this.isStart := false
@@ -100,11 +101,13 @@ class AHKRunTime
 		}
         ; 立即取回子节点，设置了最大取回两层
         this.SetEnableChildren(true)
+		this.BkManger.Dbg_Session := this.Dbg_Session
 		; Pause
 	}
 
 	; Attach to script(@param program)
 	Attach(program) {
+		DetectHiddenWindows, On
 		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
 		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
 
@@ -127,6 +130,8 @@ class AHKRunTime
 		this.Dbg_PID := pid
 		this.isStart := true
 		this.SetEnableChildren(true)
+		this.BkManger.Dbg_Session := this.Dbg_Session
+		DetectHiddenWindows, Off
 	}
 
 	GetPath()
@@ -322,15 +327,7 @@ class AHKRunTime
 		Dbg_OnBreak := true
 		this.SendEvent(CreateTerminatedEvent())
 	}
-
-	clearBreakpoints(path)
-	{
-		uri := DBGp_EncodeFileURI(path)
-		for line, bk in this.Dbg_BkList[uri]
-			this.Dbg_Session.breakpoint_remove("-d " bk.id)
-		this.Dbg_BkList[uri] := {}
-	}
-
+	
 	; @bkinfo: breakpoint infomation (dict of SourceBreakpoint)
 	SetBreakpoint(path, bkinfo)
 	{	
@@ -357,7 +354,8 @@ class AHKRunTime
 			; return reason to frontend
 			dom := loadXML(Dbg_Response)
 			errorCode := dom.selectSingleNode("/response/error/@code").text
-			throw Exception("Set Fail", -1, this.errorCodeToInfo[errorCode+0])
+			bkinfo := this.BkManger.addInvaild(DBGp_EncodeFileURI(path), bkinfo.line)
+			return {"verified": JSON.false, "line": line, "id": bkinfo.id, "source": sourcePath, "message": this.errorCodeToInfo[errorCode]}
 		}
 
 		dom := loadXML(Dbg_Response)
@@ -368,7 +366,7 @@ class AHKRunTime
 		;remove 'file:///' in begin, make uri format some
 		sourceUri := SubStr(dom.selectSingleNode("/response/breakpoint[@id=" bkID "]/@filename").text, 9)
 		sourcePath := DBGp_DecodeFileURI(sourceUri)
-		this.AddBk(sourceUri, line, bkID, bkinfo)
+		this.BkManger.add(sourceUri, line, bkID, bkinfo)
 		this.bInBkProcess := false
 
 		return {"verified": JSON.true, "line": line, "id": bkID, "source": sourcePath}
@@ -378,7 +376,7 @@ class AHKRunTime
 	{
 		uri := DBGp_EncodeFileURI(path)
 		try 
-			bkinfo := this.Dbg_BkList[uri].Clone()
+			bkinfo := this.BkManger.Get(uri).Clone()
 		catch error
 			return
 		
@@ -393,7 +391,7 @@ class AHKRunTime
 	{
 		uri := DBGp_EncodeFileURI(path)
 		
-		for line, bk in this.Dbg_BkList[uri]
+		for line, bk in this.BkManger.get(uri)
 			this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint(JSON.true, bk.id, line, , path)))
 	}
 
@@ -410,7 +408,7 @@ class AHKRunTime
 				{
 					Case "hitCondition":
 						hitCount := condition.hitCount ? condition.hitCount : 1
-						this.UpdataBk(uri, line, "hitCount", hitCount+1)
+						this.BkManger.UpdataBk(uri, line, "hitCount", hitCount+1)
 						; this.sendEvent(CreateOutputEvent("stdout", hitCount))
 						if (hitCount != param)
 							return true
@@ -640,44 +638,23 @@ class AHKRunTime
 		return scopes
 	}
 
-	AddBk(uri, line, id, cond := "")
-	{
-		; BkList -- uri
-		;         └- line
-		;          └- id, cond(bkinfo) 
-		this.Dbg_BkList[uri, line+0] := { "id": id, "cond": cond}
-	}
-
 	EnableBK(bkid)
 	{
 		this.Dbg_Session.breakpoint_update("-s enabled -d " bkID, Dbg_Response)
 	}
 
-	UpdataBk(uri, line, prop, value)
-	{
-		this.Dbg_BkList[uri, line, "cond", prop] := value
-	}
-
-	GetBk(uri, line)
-	{
-		return this.Dbg_BkList[uri, line+0]
-	}
-
 	DisableBk(uri, line)
 	{
-		; this.
-		bkID := this.GetBk(uri, line)["id"]
+		bkID := this.BkManger.get(uri, line)["id"]
 		this.Dbg_Session.breakpoint_update("-s disabled -d " bkID, Dbg_Response)
-		; this.Dbg_BkList[uri].Delete(line)
 		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint(JSON.false, bkID, line)))
 	}
 
 	RemoveBk(uri, line)
 	{
 		; this.SendEvent(CreateOutputEvent("stdout", "remove: " line))
-		bkID := this.GetBk(uri, line)["id"]
-		this.Dbg_Session.breakpoint_remove("-d " bkID, Dbg_Response)
-		this.Dbg_BkList[uri].Delete(line)
+		bkID := this.BkManger.get(uri, line)["id"]
+		this.BkManger.remove(uri, line)
 		this.SendEvent(CreateBreakpointEvent("changed", CreateBreakpoint(JSON.false, bkID, line)))
 	}
 

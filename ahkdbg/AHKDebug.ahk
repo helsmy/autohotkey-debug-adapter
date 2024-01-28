@@ -149,10 +149,13 @@ class DebugSession extends Application
                 bkp := this._runtime.SetBreakpoint(path, bkinfo)
                 source := {"name": this.GetBaseFile(bkp.source), "path": bkp.source, "sourceReference": 0+0}
                 ; Fuck Weakly Typed!
-                actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, , source)) ;
+                actualBreakpoints.Push(CreateBreakpoint(bkp.verified, bkp.id, bkp.line+0, , source, bkp.message)) ;
             }
             catch err
-                actualBreakpoints.Push(CreateBreakpoint(JSON.false,, bkinfo.line+0, 0, path, err.Extra))
+            {
+                source := {"name": this.GetBaseFile(path), "path": path, "sourceReference": 0+0}
+                actualBreakpoints.Push(CreateBreakpoint(JSON.false,, bkinfo.line+0, 0, source, err.Extra))
+            }
             finally
                 bkcheckdict[bkp.line] := ""
         }
