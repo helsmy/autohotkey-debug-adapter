@@ -5,6 +5,7 @@
 #Include ./protocolserver.ahk
 #Include <application>
 #Include ./AHKRuntime.ahk
+#Include ./TokenTypeChecker.ahk
 
 class DebugSession extends Application
 {
@@ -42,7 +43,7 @@ class DebugSession extends Application
         ; let client know DA support exception breakpoint
         response.body["exceptionBreakpointFilters"] := [ExceptionBreakpointsFilter]
         ; response.body["supportsExceptionInfoRequest"] := JSON.True
-        ; response.body["supportsEvaluateForHovers"] := JSON.true
+        response.body["supportsEvaluateForHovers"] := JSON.true
         ; response.body["supportsFunctionBreakpoints"] := JSON.true
         ; response.body["supportsBreakpointLocationsRequest"] := JSON.true
 
@@ -323,7 +324,16 @@ class DebugSession extends Application
             return this.errorResponse(response, env)
         varName := env.arguments.expression
         frameId := env.arguments.frameId
+        context := env.arguments.context
         body := {}
+        if (context == "hover") {
+            varType := TokenType(varName)
+            if (varType != "id") {
+                response.success := JSON.False
+                response["body"] := body
+                return [response]
+            }
+        }
         varibleInfo := this._runtime.EvaluateVariable(varName, frameId)
         ; logger(fsarr().print(varibleInfo))
         var_type := varibleInfo["type"]

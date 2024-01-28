@@ -613,7 +613,7 @@ class AHKRunTime
 			this.Dbg_Session.property_get("-c " this.globalContextId " -n " id, Dbg_Response)
 
 		dom := loadXML(Dbg_Response)
-		logger(Dbg_Response)
+		; this.SendEvent(CreateOutputEvent("stdout", Dbg_Response))
 
 		VarName := dom.selectSingleNode("/response/property/@name").text
 		VarFullName := dom.selectSingleNode("/response/property/@fullname").text
