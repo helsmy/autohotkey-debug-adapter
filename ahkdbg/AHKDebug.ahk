@@ -60,8 +60,18 @@ class DebugSession extends Application
         return [response]
     }
 
-    ; async exec
     launchRequest(response, env)
+    {
+        return this.HandleLaunch(response, env)
+    }
+    
+    attachRequest(response, env) 
+    {
+        return this.HandleLaunch(response, env)
+    }
+    
+    ; async exec
+    HandleLaunch(response, env)
     {
         ; start ahk debug here
         if !this.isStart
@@ -75,7 +85,12 @@ class DebugSession extends Application
             this._runtime.dbgPort := env.arguments.port
             noDebug := (env.arguments.noDebug == JSON.true) ? true : false
             try
-                this._runtime.Start(env.arguments.program, noDebug)
+            {
+                if (env.command == "launch")
+                    this._runtime.Start(env.arguments.program, noDebug)
+                else
+                    this._runtime.Attach(env.arguments.program)
+            }
             catch e
             {
                 response["body"] := {"error": CreateMessage(-1,env.arguments.program " launch fail`n" e.Message "`nExtra:" e.Extra)}
@@ -108,49 +123,10 @@ class DebugSession extends Application
             return
         }
 
-        response["command"] := "launch"
+
         stopOnEntry := (env.arguments.stopOnEntry == JSON.true) ? true : false
         this._runtime.StartRun(stopOnEntry)
 
-        return [response]
-    }
-
-    attachRequest(response, env) 
-    {
-        runtime := env.arguments.AhkExecutable
-        port    := env.arguments.port
-        program := env.arguments.program
-        if !this.isStart 
-        {
-            if (runtime == "-1") {
-                response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
-                return this.errorResponse(response, env)
-            }
-            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
-            this._runtime.AhkExecutable := FileExist(runtime) ? runtime : this._runtime.AhkExecutable
-            this._runtime.dbgPort := port
-            
-            try
-                this._runtime.Attach(program)
-            catch e
-            {
-                response["body"] := {"error": CreateMessage(-1, "Fail to attach file: '" program "'")}
-                return this.errorResponse(response, env)
-            }
-            this.isStart := true
-        }
-
-        if (!this._configurationDone and !this._timeout)
-        {
-            server := env.server
-            CTO := ObjBindMethod(this, "CheckTimeOut")
-            SetTimer, % CTO, -1000
-            RR := ObjBindMethod(server, "ResumeRequest")
-            EventDispatcher.Put(RR, env)
-            return
-        }
-
-        this._runtime.StartRun()
         return [response]
     }
 
