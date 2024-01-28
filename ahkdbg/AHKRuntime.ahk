@@ -2,6 +2,7 @@
 #Include ./AHKBKManger.ahk
 #Include <DBGp>
 #Include <event>
+#Include <JSON>
 
 class AHKRunTime
 {
@@ -284,24 +285,32 @@ class AHKRunTime
 
 		dom := loadXML(response) ; load the XML document that the variable response is
 		status := dom.selectSingleNode("/response/@status").text ; get the status
+		reason := dom.selectSingleNode("/response/@reason").text ; get the status
 		; this.SendEvent(CreateOutputEvent("stdout", status))
-		if status = break
+		if (status = "break")
 		{ ; this is a break response
 			this.Dbg_OnBreak := true ; set the Dbg_OnBreak variable
 			; Get info about the script currently running
 			this.Dbg_GetStack()
-			; soft way to implement conditional breakpoint
-			; is it necessary to do this?
-			; ahk itself even do not support this
-			; though xdebug list it as one of core command ╮（﹀_﹀）╭
-			if (this.IsNeedConditionalContiune())
+
+			; Normal Breakpoint, check if this breakpoint is conditional
+			if (reason == "ok")
 			{
-				this.Continue()
-				return
+				; soft way to implement conditional breakpoint
+				; is it necessary to do this?
+				; ahk itself even do not support this
+				; though xdebug list it as one of core command ╮（﹀_﹀）╭
+				if (this.IsNeedConditionalContiune())
+				{
+					this.Continue()
+					return
+				}
 			}
 
-			this.SendEvent(CreateStoppedEvent(this.stoppedReason, DebugSession.THREAD_ID))
 			this.stoppedReason := "breakpoint"
+			; if breakpoint is caused by exception, return reason
+			; AHK会在异常断点时在reason里声明式什么类型的异常，返回即可
+			this.SendEvent(CreateStoppedEvent(reason == "ok" ? this.stoppedReason : reason, DebugSession.THREAD_ID))
 		}
 	}
 
@@ -370,6 +379,44 @@ class AHKRunTime
 		this.bInBkProcess := false
 
 		return {"verified": JSON.true, "line": line, "id": bkID, "source": sourcePath}
+	}
+
+	/**
+	 * @param enable {bool} enable ExceptionBreakpoint or not
+	 */
+	SetExceptionBreakpoint(enable) 
+	{
+		; Is ExceptionBreakpoint enabled. start at false.
+		static isEnable := false
+		; breakpoint id of ExceptionBreakpoint
+		static bkid := ""
+
+		if (!isEnable) 
+		{
+			; Set to disable and already disable
+			if (!enable)
+				return {"verified": JSON.false}
+			this.bInBkProcess := true
+			this.Dbg_Session.breakpoint_set("-t exception", Dbg_Response)
+			If InStr(Dbg_Response, "<error") || !Dbg_Response ; Check if AutoHotkey actually inserted the breakpoint.
+			{
+				this.bInBkProcess := false
+				; return reason to frontend
+				dom := loadXML(Dbg_Response)
+				errorCode := dom.selectSingleNode("/response/error/@code").text
+				return {"verified": JSON.false, "message": this.errorCodeToInfo[errorCode]}
+			}
+			this.bInBkProcess := false
+			return {"verified": JSON.true, "id": bkid}
+		}
+		else
+		{
+			; Set to enable and already enable
+			if (enable)
+				return {"verified": JSON.true, "id": bkid}
+			this.Dbg_Session.breakpoint_remove("-d " bkid)
+			return {"verified": JSON.false, "id": bkid}
+		}
 	}
 
 	DeleteBreakpoint(path, bkCheckDict)

@@ -34,6 +34,14 @@ class DebugSession extends Application
         response.body["supportsClipboardContext"] := JSON.true
         ; experimental features
         response.body["supportsHitConditionalBreakpoints"] := JSON.true
+        ExceptionBreakpointsFilter := {"filter": "AHKExceptionBreakpoint"
+                                    , "label": "Exceptions"
+                                    , "description": "Breaks on all throw errors, even if they're caught later."
+                                    , "default": JSON.False
+                                    , "supportsCondition": JSON.False}
+        ; let client know DA support exception breakpoint
+        response.body["exceptionBreakpointFilters"] := [ExceptionBreakpointsFilter]
+        ; response.body["supportsExceptionInfoRequest"] := JSON.True
         ; response.body["supportsEvaluateForHovers"] := JSON.true
         ; response.body["supportsFunctionBreakpoints"] := JSON.true
         ; response.body["supportsBreakpointLocationsRequest"] := JSON.true
@@ -167,6 +175,20 @@ class DebugSession extends Application
         response["body"] := {}
         response.body["breakpoints"] := actualBreakpoints
         ; response.body["breakpoints"] := []
+        return [response]
+    }
+
+    setExceptionBreakpointsRequest(response, env) 
+    {
+        actualBreakpoints := []
+        filters := env.arguments.filters
+        ; we only support one filter type
+        ; If have filter, it is request to set ExceptionBreakpoint
+        bkp := this._runtime.SetExceptionBreakpoint(filters.Length() == 1)
+        actualBreakpoints.Push(bkp)
+
+        response["body"] := {}
+        response.body["breakpoints"] := actualBreakpoints
         return [response]
     }
 
@@ -317,6 +339,16 @@ class DebugSession extends Application
         response["body"] := body
 
         return [response]
+    }
+
+    exceptionInfoRequest(response, env) {
+        body := {}
+        body["exceptionId"] := "AHKException"
+        body["description"] := "Exception ocurrs"
+        body["breakMode"] := "userUnhandled"
+        ; body["details"] := {}
+        response["body"] := body
+        return [response, CreateOutputEvent("stdout", "exceptionInfoRequest")]
     }
 
     continueRequest(response, env)
