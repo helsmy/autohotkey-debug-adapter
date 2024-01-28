@@ -421,6 +421,9 @@ class AHKRunTime
 				return {"verified": JSON.false, "message": this.errorCodeToInfo[errorCode]}
 			}
 			this.bInBkProcess := false
+			dom := loadXML(Dbg_Response)
+			bkid := dom.selectSingleNode("/response/@id").text
+			isEnable := true
 			return {"verified": JSON.true, "id": bkid}
 		}
 		else
@@ -428,8 +431,7 @@ class AHKRunTime
 			; Set to enable and already enable
 			if (enable)
 				return {"verified": JSON.true, "id": bkid}
-			this.Dbg_Session.breakpoint_remove("-d " bkid)
-			return {"verified": JSON.false, "id": bkid}
+			return this.BkManger.removeId(bkid)
 		}
 	}
 

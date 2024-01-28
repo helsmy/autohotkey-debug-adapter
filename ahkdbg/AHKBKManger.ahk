@@ -47,4 +47,11 @@ class BreakPointManger {
             this.Dbg_Session.breakpoint_remove("-d " bk.id)
         this.bkDict[uri, line+0] := ""
     }
+
+    removeId(id) {
+        this.Dbg_Session.breakpoint_remove("-d " id)
+        verified := JSON.False
+        return {"id": id, "verified": verified}
+
+    }
 }

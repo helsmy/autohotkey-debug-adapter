@@ -22,9 +22,9 @@ class ProtocolServer
 	ServeForever()
 	{
 		hStdin := DllCall("GetStdHandle","Uint", -10)
-		; while (!A_DebuggerName) {
-		; 	sleep, 20
-		; }
+		while (!A_DebuggerName) {
+			sleep, 20
+		}
 		; HOR := ObjBindMethod(this, "HandleOneRequest")
 		While (this.keepRun)
 		{
