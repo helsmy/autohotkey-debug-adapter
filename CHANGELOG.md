@@ -1,5 +1,11 @@
 ## Release Notes
 
+### 0.7.2
+
+1. support `ExceptionBreakpoint`.
+2. support `EvaluateForHovers`.
+3. fix A_debuggerName dose not always set on global.
+
 ### 0.7.1
 
 1. use win32 process com to aquire the pid of script to attach

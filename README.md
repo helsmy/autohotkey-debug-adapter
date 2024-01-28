@@ -16,6 +16,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
   * Hit Count(how many hits of the breakpoint are ignored)  
   Debug adapter will auto skip breakpoint until script hits breakpoint of a given count.
   ![Conditional breakpoint](images/hitBK.gif)
+* Exception breakpoint
 * Watch Expression
   ![Watch Expression](images/watch.gif)
 * Attach Script
@@ -69,7 +70,7 @@ or if just compile debug adapter (located in `bin\debugAdapter.exe`).
 
 ## Furture Plan
 
-* [ ] Support Evaluate For Hovers
+* [x] Support Evaluate For Hovers
 * [x] Support debug console
 * [x] Change value of varible in debugging
 * [ ] conditional breakpoint (experimental feature, soft implementation)
