@@ -8,5 +8,5 @@
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
     "typescript.tsc.autoDetect": "off",
-    "ahk-simple-language-server.interpreterPath": "C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey.exe"
+    "ahk-simple-language-server.interpreterPath": "C:\\Program Files\\AutoHotkey\\v1.1.37.01\\AutoHotkeyU64.exe"
 }

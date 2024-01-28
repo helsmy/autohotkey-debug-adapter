@@ -429,7 +429,8 @@ class AHKRunTime
 	InspectVariable(Dbg_VarName, frameId)
 	{
 		; Allow retrieving immediate children for object values
-		; this.SetEnableChildren(true)
+		if (this.enableChildren == false)
+			this.SetEnableChildren(true)
 		if (frameId != "None")
 			this.Dbg_Session.property_get("-n " . Dbg_VarName . " -d " . frameId, Dbg_Response)
 		else
@@ -451,7 +452,8 @@ class AHKRunTime
 			Dbg_VarData := DBGp_Base64UTF8Decode(dom.selectSingleNode("/response/property").text)
 			Dbg_VarData := [{"name": Dbg_NewVarName, "value": Dbg_VarData, "type": type}]
 			;VE_Create(Dbg_VarName, Dbg_VarData, Dbg_VarIsReadOnly)
-		}else
+		}
+		else
 			Dbg_VarData := this.GetObjectInfoFromDom(dom, frameId)
 
 		return Dbg_VarData
@@ -462,6 +464,8 @@ class AHKRunTime
 	; frameId - where stack frame of this variable loacated
 	CheckVariables(id, frameId)
 	{
+		if (this.enableChildren == false)
+			this.SetEnableChildren(true)
 		if (id == "Global")
 			id := "-c 1"
 		else if (id == "Local")
@@ -479,18 +483,7 @@ class AHKRunTime
 		if (!InStr(ScopeContext, "</property>") && id == "-c 1")
 			this.Dbg_Session.context_get("-c 2", ScopeContext)
 		logger(ScopeContext)
-		ScopeContext := loadXML(ScopeContext)
-		name := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@name"))
-		value := Util_UnpackContNodes(ScopeContext.selectNodes("/response/property"))
-		type := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@type"))
-		facet := Util_UnpackNodes(ScopeContext.selectNodes("/response/property/@facet"))
-		result := []
-		for i, vname in name
-		{
-			varInfo := {"name": name[i], "fullName": name[i], "value": value[i], "type": type[i], "facet": facet[i]}
-			result.Push(varInfo)
-		}
-		return result
+		return this.UnpackFrameVar(loadXML(ScopeContext), frameId)
 	}
 
 	GetObjectInfoFromDom(ByRef objdom, frameId)
@@ -600,6 +593,7 @@ class AHKRunTime
 	{
 		Dbg_Session := this.Dbg_Session
 		dbgMaxChildren := this.dbgMaxChildren
+		this.enableChildren := v
 		if v
 		{
 			Dbg_Session.feature_set("-n max_children -v " dbgMaxChildren)
@@ -703,6 +697,32 @@ class AHKRunTime
 		return "mark"
 	}
 
+	UnpackFrameVar(frameNode, frameid)
+	{
+		o := []
+		variables :=  frameNode.DocumentElement.childNodes
+		; this.SendEvent(CreateOutputEvent("stdout", "var count:" variables.length))
+		for node in variables
+		{	
+			; this.SendEvent(CreateOutputEvent("stdout", "Node xml: `n" node.XML))
+			; node := variables.item[A_Index-1]
+			name := node.getAttribute("name")
+			fullName := node.getAttribute("fullname")
+			type := node.getAttribute("type")
+			facet := node.getAttribute("facet")
+			value := ""
+
+			if (type != "object")
+				value := DBGp_Base64UTF8Decode(node.text)
+			else 
+				value := Util_UnpackObjValue(frameNode.selectSingleNode("/response/property[" A_Index "]"), A_Index)
+
+			o.Push({name: name, fullName: fullName, type: type, facet: facet, value: value})
+		}
+		; this.SendEvent(CreateOutputEvent("stdout", JSON.dump(o)))
+		return o
+	}
+
 	__Delete()
 	{
 		DBGp_StopListening(this.Dbg_Socket)
@@ -727,15 +747,6 @@ Util_UnpackNodes(nodes)
 	o := []
 	Loop, % nodes.length
 		o.Insert(nodes.item[A_Index-1].text)
-	return o
-}
-
-Util_UnpackContNodes(nodes)
-{
-	o := []
-	Loop, % nodes.length
-		node := nodes.item[A_Index-1]
-		,o.Insert(node.attributes.getNamedItem("type").text != "object" ? DBGp_Base64UTF8Decode(node.text) : Util_UnpackObjValue(node, A_Index))
 	return o
 }
 
@@ -887,8 +898,9 @@ ST_ShortName(a)
 
 loadXML(ByRef data)
 {
-	o := ComObjCreate("MSXML2.DOMDocument")
+	o := ComObjCreate("MSXML2.DOMDocument.6.0")
 	o.async := false
+	o.validateOnParse := false
 	o.setProperty("SelectionLanguage", "XPath")
 	o.loadXML(data)
 	return o
@@ -897,4 +909,14 @@ loadXML(ByRef data)
 DummyCallback(session, ByRef response)
 {
 
+}
+
+class VarInfo {
+	__New(name, fullName, value, type, facet := "") {
+		this.name := name
+		this.fullName := fullName
+		this.value := value
+		this.type := type
+		this.facet := facet
+	}
 }
