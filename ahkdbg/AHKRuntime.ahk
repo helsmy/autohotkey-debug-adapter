@@ -44,6 +44,7 @@ class AHKRunTime
 		RegRead, ahkDir, HKEY_LOCAL_MACHINE\SOFTWARE\AutoHotkey, InstallDir
 		ahkPath :=  ahkDir . "\Autohotkey.exe"
 		this.AhkExecutable := FileExist(ahkPath) ? ahkPath : dfltExcutable
+		EventDispatcher.On("debugeeBreak", ObjBindMethod(this, "OnBreak"))
 	}
 
 	Init(clientArgs)
@@ -279,39 +280,11 @@ class AHKRunTime
 			; still running. In order to avoid crashing, we must delay this function's processing
 			; until the OnMessage thread is finished.
 			ODB := ObjBindMethod(this, "OnDebuggerBreak")
-			EventDispatcher.PutDelay(ODB, [session, response])
+			EventDispatcher.Put(ODB, [session, response])
 			return
 		}
 
-		dom := loadXML(response) ; load the XML document that the variable response is
-		status := dom.selectSingleNode("/response/@status").text ; get the status
-		reason := dom.selectSingleNode("/response/@reason").text ; get the status
-		; this.SendEvent(CreateOutputEvent("stdout", status))
-		if (status = "break")
-		{ ; this is a break response
-			this.Dbg_OnBreak := true ; set the Dbg_OnBreak variable
-			; Get info about the script currently running
-			this.Dbg_GetStack()
-
-			; Normal Breakpoint, check if this breakpoint is conditional
-			if (reason == "ok")
-			{
-				; soft way to implement conditional breakpoint
-				; is it necessary to do this?
-				; ahk itself even do not support this
-				; though xdebug list it as one of core command ╮（﹀_﹀）╭
-				if (this.IsNeedConditionalContiune())
-				{
-					this.Continue()
-					return
-				}
-			}
-
-			this.stoppedReason := "breakpoint"
-			; if breakpoint is caused by exception, return reason
-			; AHK会在异常断点时在reason里声明式什么类型的异常，返回即可
-			this.SendEvent(CreateStoppedEvent(reason == "ok" ? this.stoppedReason : reason, DebugSession.THREAD_ID))
-		}
+		EventDispatcher.EmitImmediately("debugeeBreak", response)
 	}
 
 	; OnDebuggerStream() - fired when we receive a stream packet.
@@ -335,6 +308,47 @@ class AHKRunTime
 		Dbg_IsClosing := true
 		Dbg_OnBreak := true
 		this.SendEvent(CreateTerminatedEvent())
+	}
+
+	OnBreak(response) {
+		dom := loadXML(response) ; load the XML document that the variable response is
+		status := dom.selectSingleNode("/response/@status").text ; get the status
+		reason := dom.selectSingleNode("/response/@reason").text ; get the status
+		; this.SendEvent(CreateOutputEvent("stdout", status))
+		if (status = "break")
+		{ ; this is a break response
+			this.Dbg_OnBreak := true ; set the Dbg_OnBreak variable
+			; Get info about the script currently running
+			this.Dbg_GetStack()
+			this.stoppedReason := "breakpoint"
+			stopReason := this.stoppedReason
+
+			; Normal Breakpoint, check if this breakpoint is conditional
+			if (reason == "ok")
+			{
+				; soft way to implement conditional breakpoint
+				; is it necessary to do this?
+				; ahk itself even do not support this
+				; though xdebug list it as one of core command ╮（﹀_﹀）╭
+				if (this.IsNeedConditionalContiune())
+				{
+					this.Continue()
+					return
+				}
+				this.SendEvent(CreateStoppedEvent(stopReason, DebugSession.THREAD_ID))
+			}
+			else
+			{
+				; if breakpoint is caused by exception, return reason
+				; AHK会在异常断点时在reason里声明式什么类型的异常，返回即可
+				; PATCH !!
+				; 莫名其妙的被跳过了一行，什么神奇的bug哦，被timer发射的函数里还不能用reason为名的变量了？
+				; 估计开个issue也不会修了，毕竟v1.1都deprecated了，也许该把这个项目切换到v2了
+				stopReason := reason
+				stopReason := reason
+				this.SendEvent(CreateStoppedEvent(stopReason, DebugSession.THREAD_ID))
+			}
+		}
 	}
 	
 	; @bkinfo: breakpoint infomation (dict of SourceBreakpoint)
