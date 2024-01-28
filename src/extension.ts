@@ -76,21 +76,20 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 
 		// use the executable specified in the package.json if it exists or determine it based on some other information (e.g. the session)
 		if (!executable) {
-			const command = "./bin/AutoHotkey.exe";
-			const args = [
-				"./ahkdbg/debugAdapter.ahk"
-			];
+			logger.warn('No executable debugadapter set. Use default executable path');
+			const command = "./bin/debugadapter.exe";
 			// no option needed
 			// const options = {};
-			executable = new vscode.DebugAdapterExecutable(command, args);
+			executable = new vscode.DebugAdapterExecutable(command);
 		}
 		// if under dev
-		if (this.mode !== vscode.ExtensionMode.Production) 
+		if (this.mode !== vscode.ExtensionMode.Production) {
 			executable = new vscode.DebugAdapterExecutable(
 				join('C:', 'Program Files', 'AutoHotkey', 'v1.1.37.01', 'AutoHotkeyU64.exe'),
 				[vscode.Uri.joinPath(this.extensionUri, ".\\ahkdbg\\debugadapter.ahk").fsPath]
 			);
-		logger.info(`factory ${JSON.stringify(executable)}`);
+			logger.info(`factory ${JSON.stringify(executable)}`);
+		}
 		// make VS Code launch the DA executable
 		return executable;
 	}
