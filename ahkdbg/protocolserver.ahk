@@ -20,6 +20,7 @@ class ProtocolServer
 
 	ServeForever()
 	{
+		global A_DebuggerName
 		hStdin := DllCall("GetStdHandle","Uint", -10)
 		; while (!A_DebuggerName) {
 		; 	sleep, 20

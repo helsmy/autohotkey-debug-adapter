@@ -61,7 +61,7 @@ class AHKRunTime
 	}
 
 	; Start DBGp Server and connect to script
-	Start(path, noDebug := false)
+	Start(path, args, noDebug := false)
 	{
 		; Ensure that some important constants exist
 		this.path := path, szFilename := path
@@ -79,8 +79,9 @@ class AHKRunTime
 
 		; Now really run AutoHotkey and wait for it to connect
 		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
+		argsString := Util_Args2String(args)
 		; DebugRun
-		Run, "%AhkExecutable%" /Debug=%dbgAddr%:%dbgPort% "%szFilename%", %szDir%,, Dbg_PID ; run AutoHotkey and store its process ID
+		Run, "%AhkExecutable%" /Debug=%dbgAddr%:%dbgPort% "%szFilename%" %argsString%, %szDir%,, Dbg_PID ; run AutoHotkey and store its process ID
 		this.Dbg_PID := Dbg_PID
 
 		timeout := 0
@@ -785,6 +786,16 @@ Util_ProcessExist(a)
 	r := ErrorLevel
 	ErrorLevel := t
 	return r
+}
+
+Util_Args2String(a)
+{
+	if (a.Length() == 0)
+		return ""
+	s := ""
+	for _, v in a 
+		s .= v " "
+	return Trim(s)
 }
 
 Util_UnpackNodes(nodes)

@@ -49,6 +49,7 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.stopOnEntry = false;
 				config.captureStreams = true;
 				config.AhkExecutable = ''; // Empty value to make da acquire executable path
+				config.args = []
 				config.port = 9005;
 				// config.log = false;
 			}

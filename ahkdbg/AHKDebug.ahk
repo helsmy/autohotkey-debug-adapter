@@ -96,7 +96,7 @@ class DebugSession extends Application
             try
             {
                 if (env.command == "launch")
-                    this._runtime.Start(env.arguments.program, noDebug)
+                    this._runtime.Start(env.arguments.program, env.arguments.args, noDebug)
                 else
                     this._runtime.Attach(env.arguments.program)
             }
