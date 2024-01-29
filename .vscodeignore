@@ -14,3 +14,5 @@ ahkdbg/*.bak
 ahkdbg
 testdata
 images
+bin/**
+!bin/debugAdapter.exe
