@@ -85,13 +85,20 @@ class DebugSession extends Application
         ; start ahk debug here
         if !this.isStart
         {
-            if (env.arguments.AhkExecutable == "-1") {
+            if (env.arguments.AhkExecutable == "-1") 
+            {
                 response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
-            this._runtime.dbgPort := env.arguments.port
+            if (IsVaildPort(env.arguments.port))
+                this._runtime.dbgPort := env.arguments.port
+            else
+            {
+                response["body"] := {"error": CreateMessage(-1, "Invaild port passed. Expect an integer but got '" env.arguments.port "'. Please check interpreter settings")}
+                return this.errorResponse(response, env)
+            }
             noDebug := (env.arguments.noDebug == JSON.true) ? true : false
             try
             {
@@ -420,4 +427,14 @@ class DebugSession extends Application
         SplitPath, % path, name
         return name
     }
+}
+
+IsVaildPort(port) {
+    if port is not Integer 
+        return false
+    ; convert port to integer
+    port += 0
+    if (port >= 1 && port <= 65535)
+        return true
+    return false
 }
