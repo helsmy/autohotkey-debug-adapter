@@ -34,6 +34,19 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"languages": [
+            {
+                "id": "ahk",
+                "aliases": [
+                    "AutoHotkey",
+                    "autohotkey",
+                    "ahk"
+                ],
+                "extensions": [
+                    ".ahk"
+                ]
+            }
+        ],
 		"breakpoints": [
 			{
 				"language": "ahk"
