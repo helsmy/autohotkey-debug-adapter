@@ -51,8 +51,8 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * `stopOnEntry`: stop on entry or not.
 * `captureStreams`: capture io streams or not.
 * `AhkExecutable`: change Default Execute Path. If left blank(use "" as value), the value of the item is automatically filled by the language support extension (by default is automaticlly acquired through registry, usually is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
-* `port`: The port on which to listen for XDebug (default: 9005)
-
+* `port`: The port on which to listen for XDebug (default: 9005).
+* `args`: Command line arguments passed to the program.
 
 ## Known Issues
 
