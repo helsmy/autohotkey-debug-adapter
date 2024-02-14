@@ -179,7 +179,7 @@
 	"scripts": {
 		"vscode:prepublish": "yarn run compile",
 		"compile": "tsc -p ./",
-		"precompile": "\"C:\\Program Files\\AutoHotkey\\Compiler\\Ahk2exe.exe\" /in ahkdbg\\debugAdapter.ahk /out bin\\debugAdapter.exe /compress 2",
+		"precompile": "\"C:\\Program Files\\AutoHotkey\\Compiler\\Ahk2exe.exe\" /in ahkdbg\\debugAdapter.ahk /out bin\\debugAdapter.exe /compress 1",
 		"watch": "tsc -watch -p ./",
 		"pretest": "yarn run compile",
 		"test": "mocha -u tdd ./out/tests/",

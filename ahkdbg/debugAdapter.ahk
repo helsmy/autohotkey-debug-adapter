@@ -1,3 +1,13 @@
+;@Ahk2Exe-SetProductName AHK Debug Adapter
+;@Ahk2Exe-ConsoleApp
+
+; Make it less easier to detect as Autohotkey
+;@Ahk2Exe-Obey U_au, = "%A_IsUnicode%" ? 2 : 1    ; Script ANSI or Unicode?
+;@Ahk2Exe-PostExec "BinMod.exe" "%A_WorkFileName%"
+;@Ahk2Exe-Cont  "%U_au%2.>AUTOHOTKEY SCRIPT<. RANDOM"
+;@Ahk2Exe-Cont  "%U_au%.AutoHotkeyGUI.RANDOM"
+;@Ahk2Exe-UpdateManifest 0 ,.
+
 #SingleInstance Force
 #NoEnv
 #NoTrayIcon
@@ -11,6 +21,16 @@ SetWorkingDir %A_ScriptDir%
 #Include <JSON>
 
 isdebug := false
+
+descript  := "AutoHotkey Debug Adapter`nDebug Adapter for AutoHotKey implemented by AutoHotKey."
+helpUsage := "For more infomation see: https://github.com/helsmy/autohotkey-debug-adaptor"
+if (A_Args.Length() >= 1) {
+    arg1 := A_Args.RemoveAt(1)
+    FileAppend %arg1%, *
+    if (arg1 == "--help" || arg1 == "-h") 
+        FileAppend %descript%`n`n%helpUsage%`n`n, *
+    ExitApp 0
+}
 ; global hEdit := CreateGui()
 
 ; Let cJson return boolen in Json way
