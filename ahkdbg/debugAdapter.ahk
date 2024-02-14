@@ -26,10 +26,11 @@ descript  := "AutoHotkey Debug Adapter`nDebug Adapter for AutoHotKey implemented
 helpUsage := "For more infomation see: https://github.com/helsmy/autohotkey-debug-adaptor"
 if (A_Args.Length() >= 1) {
     arg1 := A_Args.RemoveAt(1)
-    FileAppend %arg1%, *
+    FileAppend %arg1%, **
     if (arg1 == "--help" || arg1 == "-h") 
         FileAppend %descript%`n`n%helpUsage%`n`n, *
-    ExitApp 0
+    if (arg1 != "")
+        ExitApp 0
 }
 ; global hEdit := CreateGui()
 

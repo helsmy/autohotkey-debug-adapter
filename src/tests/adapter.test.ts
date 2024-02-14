@@ -24,7 +24,7 @@ suite('Node Debug Adapter', () => {
 	let dc: DebugClient;
 
 	setup( () => {
-		dc = new DebugClient(BIN_DEBUG_ADAPTER, "", 'ahkdbg');
+		dc = new DebugClient(BIN_DEBUG_ADAPTER, '', 'ahkdbg');
 		return dc.start();
 	});
 
