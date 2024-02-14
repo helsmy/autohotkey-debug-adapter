@@ -74,27 +74,28 @@
 				"configurationAttributes": {
 					"launch": {
 						"required": [
-							"program"
+							"program",
+							"port"
 						],
 						"properties": {
 							"program": {
 								"type": "string",
-								"description": "Absolute path to an ahk file.",
+								"description": "%ahk.debuggers.program.description%",
 								"default": "${file}"
 							},
 							"stopOnEntry": {
 								"type": "boolean",
-								"description": "Automatically stop after launch.",
+								"description": "%ahk.debuggers.stopOnEntry.description%",
 								"default": true
 							},
 							"captureStreams": {
 								"type": "boolean",
-								"description": "Whether to receive standard io stream.",
+								"description": "%ahk.debuggers.captureStreams.description%",
 								"default": true
 							},
 							"AhkExecutable": {
 								"type": "string",
-								"description": "Absolute path of executable file of AutoHotKey",
+								"description": "%ahk.debuggers.AhkExecutable.description%",
 								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
 							},
 							"args": {
@@ -102,44 +103,45 @@
 								"items": {
 									"type": "string"
 								},
-								"description": "Command line arguments passed to the program.\n\nCan be an array of strings. When the program is launched in a terminal, setting this property to a single string will result in the arguments not being escaped for the shell.",
+								"description": "%ahk.debuggers.args.description%",
 								"default": []
 							},
 							"port": {
 								"type": "number",
-								"description": "The port on which to listen for XDebug",
+								"description": "%ahk.debuggers.port.description%",
 								"default": 9005
 							}
 						}
 					},
 					"attach": {
 						"required": [
-							"program"
+							"program",
+							"port"
 						],
 						"properties": {
 							"program": {
 								"type": "string",
-								"description": "Absolute path to an ahk file.",
+								"description": "%ahk.debuggers.program.description%",
 								"default": "${file}"
 							},
 							"stopOnEntry": {
 								"type": "boolean",
-								"description": "Automatically stop after launch.",
+								"description": "%ahk.debuggers.stopOnEntry.description%",
 								"default": false
 							},
 							"captureStreams": {
 								"type": "boolean",
-								"description": "Whether to receive standard io stream.",
+								"description": "%ahk.debuggers.captureStreams.description%",
 								"default": true
 							},
 							"AhkExecutable": {
 								"type": "string",
-								"description": "Absolute path of executable file of AutoHotKey",
+								"description": "%ahk.debuggers.AhkExecutable.description%",
 								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
 							},
 							"port": {
 								"type": "number",
-								"description": "The port on which to listen for XDebug",
+								"description": "%ahk.debuggers.port.description%",
 								"default": 9005
 							}
 						}
@@ -160,15 +162,15 @@
 				"configurationSnippets": [
 					{
 						"label": "AutoHotKey Debug: Launch",
-						"description": "A new configuration for 'debugging' AutoHotKey.",
+						"description": "%ahk.debuggers.configurationSnippets.description%",
 						"body": {
 							"type": "ahkdbg",
 							"request": "launch",
 							"name": "A new configuration for 'debugging' AutoHotKey.",
-							"program": "^\"\\${workspaceRoot}/\\${fileBasename}\"",
+							"program": "${file}",
 							"stopOnEntry": true,
 							"captureStreams": true,
-							"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+							"AhkExecutable": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
 							"port": 9005
 						}
 					}

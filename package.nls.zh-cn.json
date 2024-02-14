@@ -1,0 +1,9 @@
+{
+    "ahk.debuggers.program.description": "必要参数。调试的ahk文件的完整路径。",
+    "ahk.debuggers.stopOnEntry.description": "可选参数。如果为 true，则调试程序应在目标的入口点处停止。",
+    "ahk.debuggers.captureStreams.description": "可选参数。如果为 true，则调试程序的标准输出标准错误流会被捕捉。",
+    "ahk.debuggers.AhkExecutable.description": "可选参数。Autohotkey解释器可执行文件的完整路径。",
+    "ahk.debuggers.args.description": "可选参数。传递给程序的命令行参数。\n\n为字符串数组，传递的参数不会进行转义",
+    "ahk.debuggers.port.description": "必要参数。调试协议监听的端口",
+    "ahk.debuggers.configurationSnippets.description": "新的AutoHotKey调试参数"
+}
