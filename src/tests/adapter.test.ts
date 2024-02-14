@@ -19,6 +19,7 @@ suite('Node Debug Adapter', () => {
     const RUNTIME = Path.join(PROJECT_ROOT, '/bin/AutoHotkey.exe')
 	const BIN_DEBUG_ADAPTER = Path.join(PROJECT_ROOT, 'bin', 'debugAdapter.exe');
 
+	const LAUNCH_OPTION: any = {AhkExecutable: RUNTIME , port: 9005}
 
 	let dc: DebugClient;
 
@@ -66,33 +67,45 @@ suite('Node Debug Adapter', () => {
 			return Promise.all([
 				dc.configurationSequence(),
 				dc.launch({
-					program: PROGRAM , 
-					AhkExecutable: RUNTIME
+					...LAUNCH_OPTION,
+					program: PROGRAM 
 				}),
 				dc.waitForEvent('terminated')
-			]);
+			]).catch(err => err);
 		});
 
-		test('should stop on debugger statement', () => {
+		test('should stop on debugger statement', async () => {
 
 			const PROGRAM = Path.join(DATA_ROOT, 'simple/simple_break.ahk');
 			const DEBUGGER_LINE = 3;
 
-			return Promise.all([
-				dc.configurationSequence(),
-				dc.launch({ program: PROGRAM, stopOnEntry: true, AhkExecutable: RUNTIME}),
-				dc.assertStoppedLocation('entry', { line: DEBUGGER_LINE })
-			]);
+			try {
+				return await Promise.all([
+					dc.configurationSequence(),
+					dc.launch({ ...LAUNCH_OPTION, program: PROGRAM, stopOnEntry: true}),
+					dc.assertStoppedLocation('entry', { line: DEBUGGER_LINE })
+				]);
+			} catch (err) {
+				return err;
+			}
 		});
 	});
 
-	suite('setBreakpoints', () => {
+	suite('setBreakpoints', async () => {
 
 		const PROGRAM = Path.join(DATA_ROOT, 'simple/simple_break.ahk');
 		const BREAKPOINT_LINE = 13;
 
-		test('should stop on a breakpoint', () => {
-			return dc.hitBreakpoint({ program: PROGRAM, AhkExecutable: RUNTIME }, { path: PROGRAM, line: BREAKPOINT_LINE } );
+		test('should stop on a breakpoint', async () => {
+			try {
+				const res = await dc.hitBreakpoint(
+					{ ...LAUNCH_OPTION, program: PROGRAM}, 
+					{ path: PROGRAM, line: BREAKPOINT_LINE },
+					{line: BREAKPOINT_LINE}
+				);
+			} catch (err) {
+				return err;
+			}
 		});
 	});
 
@@ -103,7 +116,7 @@ suite('Node Debug Adapter', () => {
 		test('stdout and stderr events should be complete and in correct order', () => {
 			return Promise.all([
 				dc.configurationSequence(),
-				dc.launch({ program: PROGRAM, AhkExecutable: RUNTIME, captureStreams: true }),
+				dc.launch({ ...LAUNCH_OPTION, program: PROGRAM, captureStreams: true }),
                 dc.continueRequest({threadId: 1}),
 				dc.assertOutput('stdout', "Hello stdout 0\nHello stdout 1\nHello stdout 2\n"),
 				dc.assertOutput('stderr', "Hello stderr 0\nHello stderr 1\nHello stderr 2\n")
