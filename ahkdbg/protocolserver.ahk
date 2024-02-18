@@ -11,6 +11,8 @@ class ProtocolServer
 		this.keepRun := true
 		this.buffer := new StrBuffer(512)
 		this.reqQueue := []
+		; Register send event handler
+		EventDispatcher.On("send", ObjBindMethod(this, "Send"))
 	}
 
 	SetApp(application)
@@ -80,9 +82,9 @@ class ProtocolServer
 			this.RH.FinishResponse(result)
 	}
 
-	HandleEvent(event)
+	Send(data)
 	{
-		this.RH.Send(event)
+		this.RH.Send(data)
 	}
 
 	__Delete()

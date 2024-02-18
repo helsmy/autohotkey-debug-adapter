@@ -729,7 +729,7 @@ class AHKRunTime
 
 	SendEvent(event)
 	{
-		EventDispatcher.EmitImmediately("sendEvent", event)
+		EventDispatcher.EmitImmediately("send", event)
 	}
 
 	GetValueType(v)
