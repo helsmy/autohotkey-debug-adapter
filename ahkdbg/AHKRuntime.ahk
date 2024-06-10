@@ -99,7 +99,7 @@ class AHKRunTime
 			; Resolve that debugger does not exit, when syntax error at start.
 			; Why disconnection event is not sended under this situation?
 			if (Util_ProcessExist(Dbg_PID))
-				throw Exception("invaild language.", -1, this.Dbg_Lang)
+				throw Exception("invalid language.", -1, this.Dbg_Lang)
 			else
 				this.SendEvent(CreateTerminatedEvent())
 		}
@@ -381,7 +381,7 @@ class AHKRunTime
 			; return reason to frontend
 			dom := loadXML(Dbg_Response)
 			errorCode := dom.selectSingleNode("/response/error/@code").text
-			bkinfo := this.BkManger.addInvaild(DBGp_EncodeFileURI(path), bkinfo.line)
+			bkinfo := this.BkManger.addInvalid(DBGp_EncodeFileURI(path), bkinfo.line)
 			return {"verified": JSON.false, "line": line, "id": bkinfo.id, "source": sourcePath, "message": this.errorCodeToInfo[errorCode]}
 		}
 

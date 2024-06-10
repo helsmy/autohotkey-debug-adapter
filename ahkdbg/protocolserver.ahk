@@ -58,12 +58,12 @@ class ProtocolServer
 
 	HandleOneRequest(request_data)
     {
-		Logger("Hanlder:" request_data)
+		Logger("Handler:" request_data)
         ; Construct environment dictionary using request data
         env := this.RH.ParseRequest(request_data)
 		env.server := this
 		if env.command != "waitConfiguration"
-			logger("VSC -> DA Request: " request_data)
+			Logger("VSC -> DA Request: " request_data)
 		Logger("send to reponser: " env.command)
         result := this.application(env)
 
@@ -181,9 +181,9 @@ class RequestHandler
 		responseStr := JSON.Dump(response)
 		responseStr := this.ReplaceControlChr(responseStr, (response["type"] != "event"))
 		if response.type == "event"
-			logger("DA -> VSC event: " responseStr)
+			Logger("DA -> VSC event: " responseStr)
 		else
-			logger("DA -> VSC Response: " responseStr)
+			Logger("DA -> VSC Response: " responseStr)
 		responseStr := "Content-Length: " . (StrPut(responseStr, "utf-8")-1) . "`r`n`r`n" . responseStr
 
 		this.outStream.Write(responseStr)
@@ -209,7 +209,7 @@ class RequestHandler
 MakeServer(server_address, application)
 {
 	server := new ProtocolServer(server_address*)
-	server_address[1].SetProcesser(ObjBindMethod(server, "STDCallBack"))
+	server_address[1].SetProcessor(ObjBindMethod(server, "STDCallBack"))
 	EventDispatcher.On("recv", ObjBindMethod(server, "OnRecv"))
     server.SetApp(application)
     return server

@@ -51,7 +51,7 @@ class StdIO
 	}
 	
 
-	SetProcesser(callback) 
+	SetProcessor(callback) 
 	{
 		this.processer := callback
 	}
