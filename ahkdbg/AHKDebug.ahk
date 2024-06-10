@@ -54,7 +54,7 @@ class DebugSession extends Application
             case "path":
                 this._runtime.Init(env.arguments)
             Default:
-                response["body"] := {"error": CreateMessage(-1,env.arguments.program " launch fail`nInvaild path format`nOnly support path but pass format: " env.arguments.pathFormat)}
+                response["body"] := {"error": CreateMessage(-1,env.arguments.program " launch fail`nInvalid path format`nOnly support path but pass format: " env.arguments.pathFormat)}
                 return this.errorResponse(response, env)
         }
         return [response, InitializedEvent]
@@ -87,16 +87,16 @@ class DebugSession extends Application
         {
             if (env.arguments.AhkExecutable == "-1") 
             {
-                response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
+                response["body"] := {"error": CreateMessage(-1, "Invalid runtime is passed by language server. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
-            if (IsVaildPort(env.arguments.port))
+            if (IsValidPort(env.arguments.port))
                 this._runtime.dbgPort := env.arguments.port
             else
             {
-                response["body"] := {"error": CreateMessage(-1, "Invaild port passed. Expect an integer but got '" env.arguments.port "'. Please check interpreter settings")}
+                response["body"] := {"error": CreateMessage(-1, "Invalid port passed. Expect an integer but got '" env.arguments.port "'. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
             noDebug := (env.arguments.noDebug == JSON.true) ? true : false
@@ -429,7 +429,7 @@ class DebugSession extends Application
     }
 }
 
-IsVaildPort(port) {
+IsValidPort(port) {
     if port is not Integer 
         return false
     ; convert port to integer
