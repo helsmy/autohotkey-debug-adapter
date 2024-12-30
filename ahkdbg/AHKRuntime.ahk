@@ -260,9 +260,11 @@ class AHKRunTime
 		this.Dbg_Session := session ; store the session ID in a global variable
 		dom := loadXML(init)
 		this.Dbg_Lang := dom.selectSingleNode("/init/@language").text
-		session.property_set("-n A_DebuggerName -c 1 -- " DBGp_Base64UTF8Encode(this.clientArgs.clientID))
+
+		debuggerName := this.clientArgs.clientID != "" ? this.clientArgs.clientID : this.clientArgs.adapterID
+		session.property_set("-n A_DebuggerName -c 1 -- " DBGp_Base64UTF8Encode(debuggerName))
 		; in case H version
-		session.property_set("-n A_DebuggerName -c 2 -- " DBGp_Base64UTF8Encode(this.clientArgs.clientID))
+		session.property_set("-n A_DebuggerName -c 2 -- " DBGp_Base64UTF8Encode(debuggerName))
 		session.feature_set("-n max_data -v " this.dbgMaxData)
 		this.SetEnableChildren(false)
 		if this.dbgCaptureStreams
@@ -525,18 +527,18 @@ class AHKRunTime
 	}
 
 	; Entry of variable request
-	; id - name or id restored in variable handle
-	; frameId - where stack frame of this variable loacated
-	CheckVariables(id, frameId)
+	; varRef - VarRefInfo object
+	CheckVariableReference(varRef)
 	{
 		if (this.enableChildren == false)
 			this.SetEnableChildren(true)
-		if (id == "Global")
+		id := varRef.fullName
+		if (varRef.isMeta && varRef.fullName == "Global")
 			id := "-c " this.globalContextId
-		else if (id == "Local")
-			id := "-d " . frameId . " -c 0"
+		else if (varRef.isMeta && varRef.fullName == "Local")
+			id := "-d " . varRef.frameId . " -c 0"
 		else
-			return this.InspectVariable(id, frameId)
+			return this.InspectVariable(id, varRef.frameId)
 		; TODO: may need to send error
 		; if !this.bIsAsync && !this.Dbg_OnBreak
 
@@ -896,7 +898,8 @@ Util_PropertyNodesObjToStr(ByRef propertyNodes, type)
 
 Util_NodeTextToStr(ByRef node)
 {
-	switch node.attributes.getNamedItem("type").text
+	node_type := node.attributes.getNamedItem("type").text
+	switch node_type
 	{
 		case "string":
 			return """" DBGp_Base64UTF8Decode(node.text) """"
@@ -907,15 +910,21 @@ Util_NodeTextToStr(ByRef node)
 			if (node.attributes.getNamedItem("classname").text == "Array")
 				return "[...]"
 			return "{...}"
+		case "undefined":
+			return "<undefined>"
 		default:
-			; MsgBox % node.attributes.getNamedItem("name").text
-		; TODO: send error message to vscode
-			; MsgBox % DBGp_Base64UTF8Decode(node.text)
-			stack := ""
-			loop 5 
-				stack .= Exception("",-1-A_Index).What "`n"
-			MsgBox % stack
-			throw Exception("Wrong respone node type: " node.attributes.getNamedItem("type").text, -1, stack)
+			; Send an important output event to notify user
+			EventDispatcher.EmitImmediately("send", CreateOutputEvent("important", "Debug Adapter Error: Encounter unsupported item type: " node_type))
+			return "Unsupported type:" node_type
+			; stack := "`nCall Stack:`n"
+			; loop 5 {
+			; 	e := Exception("",-A_Index)
+			; 	if (e.What == -A_Index)
+			; 		continue
+			; 	stack .= "`t" Exception("",-A_Index).What "()" "[" e.Line "]" "`n"
+			; }
+			; MsgBox % stack
+			; throw Exception("Wrong respone node type: " node.attributes.getNamedItem("type").text, -1, stack)
 	}
 }
 

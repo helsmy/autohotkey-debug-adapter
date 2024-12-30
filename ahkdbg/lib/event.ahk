@@ -1,3 +1,4 @@
+#Include <JSON>
 
 CreateStoppedEvent(reason, threadId)
 { 
@@ -12,8 +13,8 @@ CreateBreakpointEvent(reason, breakpoint)
 CreateTerminatedEvent(restart := "")
 {
 	event := {"type": "event", "event": "terminated"}
-	restart := restart ? "true"
-	if restart == "true"
+	restart := restart ? JSON.true : JSON.false
+	if restart == JSON.true
 		event["body"] := {"restart": restart}
 	return event
 }
@@ -45,7 +46,7 @@ CreateBreakpoint(verified, id := "", line := "", column := "", source := "", mes
 	return breakpoint
 }
 
-CreateMessage(id, format, variables := "", sendTelemetry := "", showUser := "true", url := "", urlLabel := "")
+CreateMessage(id, format, variables := "", sendTelemetry := "", showUser := true, url := "", urlLabel := "")
 {
 	; Message is shown by default
 	Message := {"id": id, "format": format}
@@ -54,7 +55,7 @@ CreateMessage(id, format, variables := "", sendTelemetry := "", showUser := "tru
 	if sendTelemetry != ""
 		Message["sendTelemetry"] := sendTelemetry
 	if showUser != ""
-		Message["showUser"] := showUser
+		Message["showUser"] := showUser ? JSON.true : JSON.false
 	if url
 		Message["url"] := url
 	if urlLabel
