@@ -1,4 +1,4 @@
-#Include ./protocolserver.ahk
+﻿#Include ./protocolserver.ahk
 #Include ./AHKBKManger.ahk
 #Include <DBGp>
 #Include <event>
@@ -215,6 +215,7 @@ class AHKRunTime
 			return
 		this.Dbg_Session.stack_get("", Dbg_Stack := "")
 		this.Dbg_Stack := loadXML(Dbg_Stack)
+		; DALogger.info(Dbg_Stack)
 	}
 
 	; DBGp_CloseDebugger() - used to close the debugger
@@ -503,7 +504,7 @@ class AHKRunTime
 		else
 		; context id of a global variable is 1
 			this.Dbg_Session.property_get("-c " this.globalContextId " -n " Dbg_VarName, Dbg_Response)
-		logger(Dbg_Response)
+		DALogger.info("from Debugee: " Dbg_Response)
 		; this.SetEnableChildren(false)
 		dom := loadXML(Dbg_Response)
 
@@ -543,7 +544,7 @@ class AHKRunTime
 		; if !this.bIsAsync && !this.Dbg_OnBreak
 
 		this.Dbg_Session.context_get(id, ScopeContext)
-		logger(ScopeContext)
+		DALogger.info("from Debugee: " ScopeContext)
 		; H version store global in context id=2
 		; and no extra feature_name can be used to 
 		; confirm H version
@@ -551,14 +552,14 @@ class AHKRunTime
 			this.globalContextId := 2
 			this.Dbg_Session.context_get("-c 2", ScopeContext)
 		}
-		logger(ScopeContext)
+		DALogger.info("from Debugee: " ScopeContext)
 		return this.UnpackFrameVar(loadXML(ScopeContext), frameId)
 	}
 
 	GetObjectInfoFromDom(ByRef objdom, frameId)
 	{
 		root := objdom.selectSingleNode("/response/property/@name").text
-		; logger(A_ThisFunc ": " root)
+		; DALogger.info(A_ThisFunc ": " root)
 		; this.sendEvent(CreateOutputEvent("stdout", root))
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
 		
@@ -845,7 +846,6 @@ Util_UnpackObjValue(ByRef node, index := 1, layer := 1)
 		case "Class":
 			return "(Class)"
 		case "Array", "Map":
-			logger(A_ThisFunc ": " node.attributes.getNamedItem("name").text )
 			propertyNodes := node.selectNodes(queryStr)
 			return Util_PropertyNodesObjToStr(propertyNodes, classname)
 		default:

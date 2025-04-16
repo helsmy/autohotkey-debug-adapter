@@ -101,6 +101,7 @@ class DebugSession extends Application
                 return this.errorResponse(response, env)
             }
             noDebug := (env.arguments.noDebug == JSON.true) ? true : false
+            DALogger.Init()
             try
             {
                 if (env.command == "launch")
