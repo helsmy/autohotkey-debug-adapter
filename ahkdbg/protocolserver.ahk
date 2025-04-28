@@ -183,7 +183,6 @@ class RequestHandler
 		if (response["type"] != "event" && response["body"]["data"] != "LogEvent") {
 			DALogger.info("To Client: " responseStr)
 		}
-		
 		responseStr := "Content-Length: " . (StrPut(responseStr, "utf-8")-1) . "`r`n`r`n" . responseStr
 
 		this.outStream.Write(responseStr)
@@ -209,7 +208,7 @@ class RequestHandler
 MakeServer(server_address, application)
 {
 	server := new ProtocolServer(server_address*)
-	server_address[1].SetProcesser(ObjBindMethod(server, "STDCallBack"))
+	server_address[1].SetProcessor(ObjBindMethod(server, "STDCallBack"))
 	EventDispatcher.On("recv", ObjBindMethod(server, "OnRecv"))
     server.SetApp(application)
     return server

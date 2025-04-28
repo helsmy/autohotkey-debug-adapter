@@ -4,7 +4,7 @@ class BreakPointManger {
 		;         └- line
 		;          └- id, cond(bkinfo) 
         this.bkDict := {}
-        this.invaildBreakPointIdCount := 0
+        this.invalidBreakPointIdCount := 0
         this.Dbg_Session := ""
     }
 
@@ -19,9 +19,9 @@ class BreakPointManger {
         return this.bkDict[uri, line+0]
     }
 
-    addInvaild(uri, line) {
-        this.invaildBreakPointIdCount += 1
-        id := -this.invaildBreakPointIdCount
+    addInvalid(uri, line) {
+        this.invalidBreakPointIdCount += 1
+        id := -this.invalidBreakPointIdCount
         bkinfo := { "id": id, "cond": cond}
         this.bkDict[uri, line+0] := { "id": id, "cond": cond}
         return bkinfo

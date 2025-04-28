@@ -55,7 +55,7 @@ class DebugSession extends Application
             case "path":
                 this._runtime.Init(env.arguments)
             Default:
-                response["body"] := {"error": CreateMessage(-1,env.arguments.program " launch fail`nInvaild path format`nOnly support path but pass format: " env.arguments.pathFormat)}
+                response["body"] := {"error": CreateMessage(-1,env.arguments.program " launch fail`nInvalid path format`nOnly support path but pass format: " env.arguments.pathFormat)}
                 return this.errorResponse(response, env)
         }
         return [response, InitializedEvent]
@@ -88,16 +88,17 @@ class DebugSession extends Application
         {
             if (env.arguments.AhkExecutable == "-1") 
             {
-                response["body"] := {"error": CreateMessage(-1, "Invaild runtime is passed by language server. Please check interpreter settings")}
+                response["body"] := {"error": CreateMessage(-1, "Invalid runtime is passed by language server. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
             this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
-            if (IsVaildPort(env.arguments.port))
-                this._runtime.dbgPort := env.arguments.port
-            else
+            result := ParsePort(env.arguments.port)
+            if(result[1])
+                this._runtime.dbgPort := result[2]
+            else 
             {
-                response["body"] := {"error": CreateMessage(-1, "Invaild port passed. Expect an integer but got '" env.arguments.port "'. Please check interpreter settings")}
+                response["body"] := {"error": CreateMessage(-1, result[2] " received: '"  env.arguments.port "'. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
             noDebug := (env.arguments.noDebug == JSON.true) ? true : false
@@ -462,20 +463,62 @@ class DebugSession extends Application
     }
 }
 
-IsVaildPort(port) {
-    if port is not Integer 
-        return false
-    ; convert port to integer
-    port += 0
-    if (port >= 1 && port <= 65535)
-        return true
-    return false
+; Function to validate if a port number is within the valid range
+IsValidPort(Port) {
+    return (Port >= 1 and Port <= 65535)
 }
 
-IsInArray(arr, e) {
-    for _, i in arr {
-        if InStr(i, e)
-            return true
-    }
-    return false
-}
+; Function to parse and validate a port number or range
+ ParsePort(Port) {
+     Valid := False
+     Result := ""
+
+     ; If Port is an integer
+     if (Port is Integer) {
+         if IsValidPort(Port) {
+             Valid := True
+             Result := Port
+         } else {
+             Result := "Error: Invalid port number. Must be between 1 and 65535."
+         }
+     } else if (Port is String) {
+         ; Trim any spaces
+         Port := Trim(Port)
+
+         ; Check if it is a single port number represented as a string
+         if RegExMatch(Port, "^\d+$") {
+             PortNum := Port + 0 ; Convert to integer
+             if IsValidPort(PortNum) {
+                 Valid := True
+                 Result := PortNum
+             } else {
+                 Result := "Error: Invalid port number. Must be between 1 and 65535."
+             }
+         } else if RegExMatch(Port, "^\d+\s*-\s*\d+$") {
+             ; Remove any spaces around the dash
+             Port := RegExReplace(Port, "\s*-\s*", "-")
+             StringSplit, PortParts, Port, -
+                 StartPort := PortParts1 + 0 ; Convert to integer
+             EndPort := PortParts2 + 0 ; Convert to integer
+
+             if IsValidPort(StartPort) and IsValidPort(EndPort) {
+                 if (StartPort <= EndPort) {
+                     ; Generate a random port within the range
+                     Random, RandomPort, StartPort, EndPort
+                     Valid := True
+                     Result := RandomPort
+                 } else {
+                     Result := "Error: Start port must be less than or equal to end port."
+                 }
+             } else {
+                 Result := "Error: Port numbers in the range must be between 1 and 65535."
+             }
+         } else {
+             Result := "Error: Invalid input format."
+         }
+     } else {
+         Result := "Error: Invalid input format."
+     }
+
+     return [Valid, Result]
+ }
