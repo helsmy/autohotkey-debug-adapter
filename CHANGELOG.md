@@ -1,5 +1,11 @@
 ## Release Notes
 
+### 0.7.3
+
+1. support passing command line arguments to script.
+2. add localiztion of launch.json description.
+3. additional check for `port` setting. 
+
 ### 0.7.2
 
 1. support `ExceptionBreakpoint`.

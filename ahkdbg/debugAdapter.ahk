@@ -36,22 +36,21 @@ if (A_Args.Length() >= 1) {
 
 ; Let cJson return boolen in Json way
 JSON.BoolsAsInts := false
+global DALogger := new Logger()
 IOStream := new StdIO()
 SERVER_ADDRESS := [IOStream, IOStream]
 module := new DebugSession()
 app := module.BuildApp()
 
 DAd := MakeServer(SERVER_ADDRESS, app)
-; Register send event handler
-EventDispatcher.On("sendEvent", ObjBindMethod(DAd, "HandleEvent"))
 OnError("GlobalErrorHandler")
 
 DAd.ServeForever()
 
 GlobalErrorHandler(exception)
 {
-    EventDispatcher.EmitImmediately("sendEvent", CreateOutputEvent("stdout", "Debug Adapter Error:" exception.Message "Sepecially: " exception.Extra))
-    EventDispatcher.EmitImmediately("sendEvent", CreateTerminatedEvent())
+    EventDispatcher.EmitImmediately("send", CreateOutputEvent("stdout", "Debug Adapter Error:" exception.Message "Sepecially: " exception.Extra))
+    EventDispatcher.EmitImmediately("send", CreateTerminatedEvent())
 }
 
 ; WaitDebugger() {

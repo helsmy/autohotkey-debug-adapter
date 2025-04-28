@@ -1,4 +1,4 @@
-#Include ./protocolserver.ahk
+﻿#Include ./protocolserver.ahk
 #Include ./AHKBKManger.ahk
 #Include <DBGp>
 #Include <event>
@@ -215,6 +215,7 @@ class AHKRunTime
 			return
 		this.Dbg_Session.stack_get("", Dbg_Stack := "")
 		this.Dbg_Stack := loadXML(Dbg_Stack)
+		; DALogger.info(Dbg_Stack)
 	}
 
 	; DBGp_CloseDebugger() - used to close the debugger
@@ -260,9 +261,11 @@ class AHKRunTime
 		this.Dbg_Session := session ; store the session ID in a global variable
 		dom := loadXML(init)
 		this.Dbg_Lang := dom.selectSingleNode("/init/@language").text
-		session.property_set("-n A_DebuggerName -c 1 -- " DBGp_Base64UTF8Encode(this.clientArgs.clientID))
+
+		debuggerName := this.clientArgs.clientID != "" ? this.clientArgs.clientID : this.clientArgs.adapterID
+		session.property_set("-n A_DebuggerName -c 1 -- " DBGp_Base64UTF8Encode(debuggerName))
 		; in case H version
-		session.property_set("-n A_DebuggerName -c 2 -- " DBGp_Base64UTF8Encode(this.clientArgs.clientID))
+		session.property_set("-n A_DebuggerName -c 2 -- " DBGp_Base64UTF8Encode(debuggerName))
 		session.feature_set("-n max_data -v " this.dbgMaxData)
 		this.SetEnableChildren(false)
 		if this.dbgCaptureStreams
@@ -501,7 +504,7 @@ class AHKRunTime
 		else
 		; context id of a global variable is 1
 			this.Dbg_Session.property_get("-c " this.globalContextId " -n " Dbg_VarName, Dbg_Response)
-		logger(Dbg_Response)
+		DALogger.info("from Debugee: " Dbg_Response)
 		; this.SetEnableChildren(false)
 		dom := loadXML(Dbg_Response)
 
@@ -525,23 +528,23 @@ class AHKRunTime
 	}
 
 	; Entry of variable request
-	; id - name or id restored in variable handle
-	; frameId - where stack frame of this variable loacated
-	CheckVariables(id, frameId)
+	; varRef - VarRefInfo object
+	CheckVariableReference(varRef)
 	{
 		if (this.enableChildren == false)
 			this.SetEnableChildren(true)
-		if (id == "Global")
+		id := varRef.fullName
+		if (varRef.isMeta && varRef.fullName == "Global")
 			id := "-c " this.globalContextId
-		else if (id == "Local")
-			id := "-d " . frameId . " -c 0"
+		else if (varRef.isMeta && varRef.fullName == "Local")
+			id := "-d " . varRef.frameId . " -c 0"
 		else
-			return this.InspectVariable(id, frameId)
+			return this.InspectVariable(id, varRef.frameId)
 		; TODO: may need to send error
 		; if !this.bIsAsync && !this.Dbg_OnBreak
 
 		this.Dbg_Session.context_get(id, ScopeContext)
-		logger(ScopeContext)
+		DALogger.info("from Debugee: " ScopeContext)
 		; H version store global in context id=2
 		; and no extra feature_name can be used to 
 		; confirm H version
@@ -549,14 +552,14 @@ class AHKRunTime
 			this.globalContextId := 2
 			this.Dbg_Session.context_get("-c 2", ScopeContext)
 		}
-		logger(ScopeContext)
+		DALogger.info("from Debugee: " ScopeContext)
 		return this.UnpackFrameVar(loadXML(ScopeContext), frameId)
 	}
 
 	GetObjectInfoFromDom(ByRef objdom, frameId)
 	{
 		root := objdom.selectSingleNode("/response/property/@name").text
-		; logger(A_ThisFunc ": " root)
+		; DALogger.info(A_ThisFunc ": " root)
 		; this.sendEvent(CreateOutputEvent("stdout", root))
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
 		
@@ -729,7 +732,7 @@ class AHKRunTime
 
 	SendEvent(event)
 	{
-		EventDispatcher.EmitImmediately("sendEvent", event)
+		EventDispatcher.EmitImmediately("send", event)
 	}
 
 	GetValueType(v)
@@ -843,7 +846,6 @@ Util_UnpackObjValue(ByRef node, index := 1, layer := 1)
 		case "Class":
 			return "(Class)"
 		case "Array", "Map":
-			logger(A_ThisFunc ": " node.attributes.getNamedItem("name").text )
 			propertyNodes := node.selectNodes(queryStr)
 			return Util_PropertyNodesObjToStr(propertyNodes, classname)
 		default:
@@ -896,7 +898,8 @@ Util_PropertyNodesObjToStr(ByRef propertyNodes, type)
 
 Util_NodeTextToStr(ByRef node)
 {
-	switch node.attributes.getNamedItem("type").text
+	node_type := node.attributes.getNamedItem("type").text
+	switch node_type
 	{
 		case "string":
 			return """" DBGp_Base64UTF8Decode(node.text) """"
@@ -907,15 +910,21 @@ Util_NodeTextToStr(ByRef node)
 			if (node.attributes.getNamedItem("classname").text == "Array")
 				return "[...]"
 			return "{...}"
+		case "undefined":
+			return "<undefined>"
 		default:
-			; MsgBox % node.attributes.getNamedItem("name").text
-		; TODO: send error message to vscode
-			; MsgBox % DBGp_Base64UTF8Decode(node.text)
-			stack := ""
-			loop 5 
-				stack .= Exception("",-1-A_Index).What "`n"
-			MsgBox % stack
-			throw Exception("Wrong respone node type: " node.attributes.getNamedItem("type").text, -1, stack)
+			; Send an important output event to notify user
+			EventDispatcher.EmitImmediately("send", CreateOutputEvent("important", "Debug Adapter Error: Encounter unsupported item type: " node_type))
+			return "Unsupported type:" node_type
+			; stack := "`nCall Stack:`n"
+			; loop 5 {
+			; 	e := Exception("",-A_Index)
+			; 	if (e.What == -A_Index)
+			; 		continue
+			; 	stack .= "`t" Exception("",-A_Index).What "()" "[" e.Line "]" "`n"
+			; }
+			; MsgBox % stack
+			; throw Exception("Wrong respone node type: " node.attributes.getNamedItem("type").text, -1, stack)
 	}
 }
 
