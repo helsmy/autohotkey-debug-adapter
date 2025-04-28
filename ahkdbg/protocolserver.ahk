@@ -11,6 +11,8 @@ class ProtocolServer
 		this.keepRun := true
 		this.buffer := new StrBuffer(512)
 		this.reqQueue := []
+		; Register send event handler
+		EventDispatcher.On("send", ObjBindMethod(this, "Send"))
 	}
 
 	SetApp(application)
@@ -22,7 +24,7 @@ class ProtocolServer
 	{
 		global A_DebuggerName
 		hStdin := DllCall("GetStdHandle","Uint", -10)
-		; while (!A_DebuggerName) {
+		; while (!A_DebuggerName && !A_IsCompiled) {
 		; 	sleep, 20
 		; }
 		; HOR := ObjBindMethod(this, "HandleOneRequest")
@@ -32,8 +34,8 @@ class ProtocolServer
 			bytesRead := 0
 			status1 := DllCall("PeekNamedPipe", "Ptr", hStdin, "Int", 0, "Int", 0, "Int", 0, "Int*", bytesAvail, "Int", 0, "Int")
 			; lastError := DllCall("GetLastError", "int")
-			; if (status1 != 0)
-			; 	throw Exception("System Error Code:" DllCall("GetLastError", "int"))
+			if (status1 == 0)
+				throw Exception("System Error Code:" DllCall("GetLastError", "int"))
 			while (bytesAvail > 0) 
 			{
 				header := this.inStream.ReadLine()
@@ -58,13 +60,10 @@ class ProtocolServer
 
 	HandleOneRequest(request_data)
     {
-		Logger("Handler:" request_data)
+		DALogger.info("From Client: " request_data)
         ; Construct environment dictionary using request data
         env := this.RH.ParseRequest(request_data)
 		env.server := this
-		if env.command != "waitConfiguration"
-			Logger("VSC -> DA Request: " request_data)
-		Logger("send to reponser: " env.command)
         result := this.application(env)
 
         ; Construct a response and send it back to the client
@@ -80,9 +79,9 @@ class ProtocolServer
 			this.RH.FinishResponse(result)
 	}
 
-	HandleEvent(event)
+	Send(data)
 	{
-		this.RH.Send(event)
+		this.RH.Send(data)
 	}
 
 	__Delete()
@@ -104,7 +103,7 @@ class EventDispatcher
 			this.eventQueue.Push([handler, data])
 		else
 			this.immediateQueue.Push([handler, data])
-		Logger("Put response " this.eventQueue.Length() " for:" data)
+		; Logger("Put response " this.eventQueue.Length() " for:" data)
 		; Using a single timer ensures that each handler finishes before
 		; the next is called, and that each runs in its own thread.
 		DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
@@ -116,12 +115,12 @@ class EventDispatcher
 		DT := ObjBindMethod(EventDispatcher, "DispatchTimer")
 		; Clear immediateQueue array before fire handler of eventQueue
 		if (next := this.immediateQueue.RemoveAt(1))
-			Logger("fire response for:" next[2]),fn := next[1], %fn%(next[2])
+			fn := next[1], %fn%(next[2])
 		; Call exactly one handler per new thread.
 		else if next := this.eventQueue.RemoveAt(1) {
-			Logger("fire response for:" next[2])
+			; Logger("fire response for:" next[2])
 			fn := next[1]
-			Logger("handler name: " fn.MinParams)
+			; Logger("handler name: " fn.MinParams)
 			fn.Call(next[2])
 		}
 		; If the queue is not empty, reset the timer.
@@ -180,10 +179,10 @@ class RequestHandler
 		; responseStr := JSON.FromObj(response)
 		responseStr := JSON.Dump(response)
 		responseStr := this.ReplaceControlChr(responseStr, (response["type"] != "event"))
-		if response.type == "event"
-			Logger("DA -> VSC event: " responseStr)
-		else
-			Logger("DA -> VSC Response: " responseStr)
+		; Log test
+		if (response["type"] != "event" && response["body"]["data"] != "LogEvent") {
+			DALogger.info("To Client: " responseStr)
+		}
 		responseStr := "Content-Length: " . (StrPut(responseStr, "utf-8")-1) . "`r`n`r`n" . responseStr
 
 		this.outStream.Write(responseStr)

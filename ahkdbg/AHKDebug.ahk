@@ -18,6 +18,7 @@ class DebugSession extends Application
         this.isStart := false
         this._variableHandles := new Handles()
         this._runtime := new AHKRunTime()
+        this.metaVariableNames := ["class variables", "function variables"]
     }
 
     CheckTimeOut()
@@ -101,6 +102,7 @@ class DebugSession extends Application
                 return this.errorResponse(response, env)
             }
             noDebug := (env.arguments.noDebug == JSON.true) ? true : false
+            DALogger.Init()
             try
             {
                 if (env.command == "launch")
@@ -219,7 +221,7 @@ class DebugSession extends Application
 
     setVariableRequest(response, env)
     {
-        frameId := this._variableHandles.get(env.arguments.variablesReference)[2]
+        frameId := this._variableHandles.get(env.arguments.variablesReference).frameId
         try
             variable := this._runtime.SetVariable(env.arguments.name, frameId, env.arguments.value)[1]
         catch err
@@ -278,8 +280,8 @@ class DebugSession extends Application
         frameId := env.arguments.frameId
         response["body"] := {}
         ; Since ahk always keeps two scopes(Local, Global), just return them
-        response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(["Local", frameId]), "expensive": JSON.false}
-                                  , {"name": "Global", "variablesReference": this._variableHandles.create(["Global", "None"]), "expensive": JSON.true}]
+        response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(new VarRefInfo("Local", frameId, true)), "expensive": JSON.false}
+                                  , {"name": "Global", "variablesReference": this._variableHandles.create(new VarRefInfo("Global", "None", true)), "expensive": JSON.true}]
         return [response]
     }
 
@@ -290,34 +292,65 @@ class DebugSession extends Application
         ; id : [variableFullName, its frameid]
         id := this._variableHandles.get(env.arguments.variablesReference)
         variables := []
+        if (!id) {
+            response["error"] := CreateMessage(-1, "Get an non-exist variable reference.")
+            return this.errorResponse(response, env)
+        }
+        
+        isGlobalScope := id.isMeta && id.fullName == "Global"
+        ; EventDispatcher.EmitImmediately("send", CreateOutputEvent("stdout", "varref fullname: " id.fullName " frameId: " id.frameId))
+        if (isGlobalScope) {
+            additionalInfo := {}
+            for _, metaName in this.metaVariableNames {
+                additionalInfo[metaName] := []
+            }
+        }
         ; Return variable list
-        if (id)
+        variablesRaw := id.isMeta && IsInArray(this.metaVariableNames, id.fullName) ; if reference is a variables folding
+                        ? id.addtional
+                        : this._runtime.CheckVariableReference(id)
+        for _, var in variablesRaw 
         {
-            variablesRaw := this._runtime.CheckVariables(id[1], id[2])
-            for _, var in variablesRaw 
-            {
-                ; if (var.name = "true" or var.name = "false")
-                ;     var.name .= " "
+            ; if (var.name = "true" or var.name = "false")
+            ;     var.name .= " "
 
-                if (var.type == "undefined")
-                    var.value := "<undefined>"
-                else if (var.type == "string")
-                    var.value := """" var.value """"
-                    ; replace escape character to original form
-                    , var.value := StrReplace(var.value, "`n", "``n")
-                    , var.value := StrReplace(var.value, "`r", "``r")
-                    , var.value := StrReplace(var.value, "`t", "``t")
-                ; FIXME: problem in name is 'true' or 'false'
-                variables.Push({"name": var.name
-                               ,"type": var.type
-                               ,"value": var.value
-                               ,"variablesReference"
-                               : var.type == "object" 
-                            ;    store fullname for inspecting
-                               ? this._variableHandles.create([var.fullName, id[2]])+0 : 0})
-                               ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
-                if var.facet == "Builtin"
-                    var["presentationHint"] := {"attributes": ["constant", "readOnly"]}
+            if (var.type == "undefined")
+                var.value := "<undefined>"
+            else if (var.type == "string")
+                var.value := """" var.value """"
+                ; replace escape character to original form
+                , var.value := StrReplace(var.value, "`n", "``n")
+                , var.value := StrReplace(var.value, "`r", "``r")
+                , var.value := StrReplace(var.value, "`t", "``t")
+            ; FIXME: problem in name is 'true' or 'false'
+            if (isGlobalScope && var.type == "object" && (var.value == "(Class)" || var.value == "Func")) {
+                ; cache Global infomation
+                if (var.value == "(Class)")
+                    additionalInfo["class variables"].Push(var)
+                if (var.value == "Func")
+                    additionalInfo["function variables"].Push(var)
+                continue
+            }
+            variables.Push({"name": var.name
+                            ,"type": var.type
+                            ,"value": var.value
+                            ,"variablesReference"
+                            : var.type == "object" 
+                        ;    store fullname for inspecting
+                            ? this._variableHandles.create(new VarRefInfo(var.fullName, id.frameId))+0 : 0})
+                            ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
+            if var.facet == "Builtin"
+                var["presentationHint"] := {"attributes": ["constant", "readOnly"]}
+        }
+        ; Global variables folding
+        if (isGlobalScope) {
+            for _, metaName in this.metaVariableNames {
+                varRef := new VarRefInfo(metaName, "None", true)
+                ; cache Global class infomation
+                varRef.addtional := additionalInfo[metaName]
+                variables.Push({"name": metaName
+                              , "value": ""
+                              , "variablesReference":this._variableHandles.create(varRef)+0})
             }
         }
         ; MsgBox, % fsarr().print(variables)
@@ -353,7 +386,7 @@ class DebugSession extends Application
         body["result"] := result
         body["type"] := var_type
         body["variablesReference"] := var_type == "object" 
-                                    ? this._variableHandles.create([varibleInfo["fullName"], frameId]) : 0
+                                    ? this._variableHandles.create(new VarRefInfo(varibleInfo["fullName"], frameId)) : 0
         response["body"] := body
 
         return [response]
@@ -435,7 +468,7 @@ IsValidPort(Port) {
     return (Port >= 1 and Port <= 65535)
 }
 
- ; Function to parse and validate a port number or range
+; Function to parse and validate a port number or range
  ParsePort(Port) {
      Valid := False
      Result := ""

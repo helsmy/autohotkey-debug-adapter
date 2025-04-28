@@ -29,3 +29,16 @@ class Handles
 
     }
 }
+
+class VarRefInfo
+{
+    /**
+     * @param isMeta Variable reference is not a really ahk variable, but a placehold for variable folding or etc. 
+     */
+    __New(fullname, frameId, isMeta := false) {
+        this.fullName := fullname
+        this.frameId  := frameId
+        this.isMeta   := isMeta
+        this.addtional := ""
+    }
+}

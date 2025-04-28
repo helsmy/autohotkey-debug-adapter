@@ -3,7 +3,7 @@
     "ahk.debuggers.stopOnEntry.description": "Automatically stop after launch.",
     "ahk.debuggers.captureStreams.description": "Whether to receive standard io stream.",
     "ahk.debuggers.AhkExecutable.description": "Absolute path of executable file of AutoHotKey",
-    "ahk.debuggers.args.description": "Command line arguments passed to the program.\n\nCan be an array of strings. When the program is launched in a terminal, setting this property to a single string will result in the arguments not being escaped for the shell.",
+    "ahk.debuggers.args.description": "Command line arguments passed to the program.\n\nCan be an array of strings.",
     "ahk.debuggers.port.description": "The port on which to listen for XDebug.",
     "ahk.debuggers.configurationSnippets.description": "A new configuration for 'debugging' AutoHotKey."
 }
