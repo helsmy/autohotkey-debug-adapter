@@ -30,7 +30,9 @@ class AHKRunTime
 	__New()
 	{
 		this.dbgAddr := "127.0.0.1"
-		this.dbgPort := 9005 ;temp mock debug port
+		; Default port
+		this.dbgPort := 9005
+		this.portRange := []
 		this.bIsAttach := false
 		this.dbgCaptureStreams := false
 		this.Dbg_Session := ""
@@ -66,7 +68,6 @@ class AHKRunTime
 		; Ensure that some important constants exist
 		this.path := path, szFilename := path
 		AhkExecutable := this.AhkExecutable
-		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
 		SplitPath, szFilename,, szDir
 
 		if noDebug
@@ -78,8 +79,9 @@ class AHKRunTime
 		}
 
 		; Now really run AutoHotkey and wait for it to connect
-		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
+		this.ListenOnPorts()
 		argsString := Util_Args2String(args)
+		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
 		; DebugRun
 		Run, "%AhkExecutable%" /Debug=%dbgAddr%:%dbgPort% "%szFilename%" %argsString%, %szDir%,, Dbg_PID ; run AutoHotkey and store its process ID
 		this.Dbg_PID := Dbg_PID
@@ -112,14 +114,13 @@ class AHKRunTime
 	; Attach to script(@param program)
 	Attach(program) {
 		DetectHiddenWindows, On
-		dbgAddr := this.dbgAddr, dbgPort := this.dbgPort ? this.dbgPort : 9005
-		this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
+		this.ListenOnPorts() ; start listening
 
 		; Find script to attach
 		pid := Util_FindRunningProcessID(program)
 		if (pid)
 			; Reference: https://github.com/zero-plusplus/vscode-autohotkey-debug
-			PostMessage DllCall("RegisterWindowMessage", "Str", "AHK_ATTACH_DEBUGGER"), DllCall("ws2_32\inet_addr", "astr", dbgAddr), dbgPort,, ahk_pid %pid%
+			PostMessage DllCall("RegisterWindowMessage", "Str", "AHK_ATTACH_DEBUGGER"), DllCall("ws2_32\inet_addr", "astr", this.dbgAddr), this.dbgPort,, ahk_pid %pid%
 		else
 		{
 			DBGp_StopListening(this.Dbg_Socket) ; Script not found, stop listening
@@ -136,6 +137,24 @@ class AHKRunTime
 		this.SetEnableChildren(true)
 		this.BkManger.Dbg_Session := this.Dbg_Session
 		DetectHiddenWindows, Off
+	}
+
+	/**
+	 * Try each port one by one in range of this.portRange
+	 */
+	ListenOnPorts() {
+		dbgAddr := this.dbgAddr
+		portRange := this.portRange.Length() > 1 ? this.portRange : [this.dbgPort, this.dbgPort]
+		while (A_Index-1 <= portRange[2]-portRange[1]) {
+			dbgPort := portRange[1] + A_Index - 1
+			this.Dbg_Socket := DBGp_StartListening(dbgAddr, dbgPort) ; start listening
+			if (this.Dbg_Socket != "") 
+				break
+		}
+		if (this.Dbg_Socket == "")
+			throw Exception("Fail to connect to Autohotkey. Can not find an available port in " portRange[1] "-" portRange[2] ". Please try another port", -1)
+		; Store port listening on for passing to debugee
+		this.dbgPort := dbgPort
 	}
 
 	GetPath()
