@@ -92,7 +92,8 @@ class DebugSession extends Application
                 return this.errorResponse(response, env)
             }
             this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
-            this._runtime.AhkExecutable := FileExist(env.arguments.AhkExecutable) ? env.arguments.AhkExecutable : this._runtime.AhkExecutable
+            runtime := env.arguments.runtime == "" ? env.arguments.AhkExecutable : env.arguments.runtime
+            this._runtime.AhkExecutable := FileExist(runtime) ? runtime : this._runtime.AhkExecutable
             result := ParsePort(env.arguments.port)
             if(result[1])
                 this._runtime.portRange := result[2]

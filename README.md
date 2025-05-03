@@ -7,8 +7,9 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 
 * Basic debug functions. Step into, step out, breakpoints etc.
 * Show call stack and varibles.
-* change varibles in debugging
+* Change varibles in debugging
 * Debug ahkv2 or H version since debug protocol do not change.(by set AhkExecutable path to corresponding runtime path in launch.json)
+* Support port range. Adepter will choose the smallest available port in the range (Thanks to @mahmoudimus)
 
 ## Experimental Feature
 
@@ -51,7 +52,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * `stopOnEntry`: stop on entry or not.
 * `captureStreams`: capture io streams or not.
 * `AhkExecutable`: change Default Execute Path. If left blank(use "" as value), the value of the item is automatically filled by the language support extension (by default is automaticlly acquired through registry, usually is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
-* `port`: The port on which to listen for XDebug (default: 9005).
+* `port`: The port on which to listen for XDebug (default: 9005) can be an interger or range (example: "9000-9005").
 * `args`: Command line arguments passed to the program.
 
 ## Known Issues
@@ -59,7 +60,13 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 An early version which needs test. Use it at you own risk.
 1. The max number of object children to be display is 99.
 
-## Build
+## Development
+
+### How to run this in debug mode
+
+Install the 1.1.37.01 version autohotkey which is the development verion and make sure installed path is `C:\Program Files\AutoHotkey\v1.1.37.01\AutoHotkeyU64.exe`. This is hard coded in `extension.ts` and used to run uncompiled version adapter.
+
+### Build
 
 From 0.7.0 version, extension use a compiled version of debug adapter for a better experence. If any changes of DA is needed, the extension must be built again.
 1. This project use yarn, so first step is: `yarn install`

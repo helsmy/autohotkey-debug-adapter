@@ -98,6 +98,11 @@
 								"description": "%ahk.debuggers.AhkExecutable.description%",
 								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
 							},
+							"runtime": {
+								"type": "string",
+								"description": "%ahk.debuggers.runtime.description%",
+								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
+							},
 							"args": {
 								"type": "array",
 								"items": {
@@ -139,6 +144,11 @@
 								"description": "%ahk.debuggers.AhkExecutable.description%",
 								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
 							},
+							"runtime": {
+								"type": "string",
+								"description": "%ahk.debuggers.runtime.description%",
+								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
+							},
 							"port": {
 								"type": "number",
 								"description": "%ahk.debuggers.port.description%",
@@ -155,7 +165,7 @@
 						"program": "${file}",
 						"stopOnEntry": false,
 						"captureStreams": true,
-						"AhkExecutable": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
+						"runtime": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe",
 						"port": 9005
 					}
 				],
@@ -170,7 +180,7 @@
 							"program": "${file}",
 							"stopOnEntry": true,
 							"captureStreams": true,
-							"AhkExecutable": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
+							"runtime": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
 							"port": 9005
 						}
 					}

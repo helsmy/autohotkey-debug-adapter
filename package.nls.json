@@ -2,7 +2,8 @@
     "ahk.debuggers.program.description": "Absolute path to an ahk file.",
     "ahk.debuggers.stopOnEntry.description": "Automatically stop after launch.",
     "ahk.debuggers.captureStreams.description": "Whether to receive standard io stream.",
-    "ahk.debuggers.AhkExecutable.description": "Absolute path of executable file of AutoHotKey",
+    "ahk.debuggers.AhkExecutable.description": "Absolute path of executable file of AutoHotKey(deprecated, use runtime instead)",
+    "ahk.debuggers.runtime.description": "Absolute path of executable file of AutoHotKey. The extension will prefer this option as interpreter path.",
     "ahk.debuggers.args.description": "Command line arguments passed to the program.\n\nCan be an array of strings.",
     "ahk.debuggers.port.description": "The port on which to listen for XDebug.",
     "ahk.debuggers.configurationSnippets.description": "A new configuration for 'debugging' AutoHotKey."

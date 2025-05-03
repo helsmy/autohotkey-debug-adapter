@@ -4,6 +4,17 @@ import * as vscode from 'vscode';
 import { WorkspaceFolder, DebugConfiguration, ProviderResult, CancellationToken } from 'vscode';
 import { Logger } from './logger'
 import { join } from 'path';
+import { existsSync } from 'fs'
+
+interface AutoHotkeyDebugConfiguration extends DebugConfiguration{
+	stopOnEntry: boolean
+	captureStreams: boolean
+	/** @deprecated */
+	AhkExecutable: string
+	runtime: string
+	args: []
+	port: number|string
+}
 const logger = new Logger();
 
 
@@ -35,7 +46,7 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 	 * Massage a debug configuration just before a debug session is being launched,
 	 * e.g. add all missing attributes to the debug configuration.
 	 */
-	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
+	resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: AutoHotkeyDebugConfiguration, token?: CancellationToken): ProviderResult<DebugConfiguration> {
 
 		// if launch.json is missing or empty
 		if (!config.type && !config.request && !config.name) {
@@ -49,6 +60,7 @@ class DebugConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.stopOnEntry = false;
 				config.captureStreams = true;
 				config.AhkExecutable = ''; // Empty value to make da acquire executable path
+				config.runtime = '';       // Empty value to make da acquire executable path
 				config.args = []
 				config.port = 9005;
 				// config.log = false;
@@ -85,8 +97,12 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 		}
 		// if under dev
 		if (this.mode !== vscode.ExtensionMode.Production) {
+			const runtime = join('C:', 'Program Files', 'AutoHotkey', 'v1.1.37.01', 'AutoHotkeyU64.exe');
+			if (!existsSync(runtime))
+				throw Error(`Autohotkey runtime is not exist in '${runtime}'`);
+			
 			executable = new vscode.DebugAdapterExecutable(
-				join('C:', 'Program Files', 'AutoHotkey', 'v1.1.37.01', 'AutoHotkeyU64.exe'),
+				runtime,
 				[vscode.Uri.joinPath(this.extensionUri, ".\\ahkdbg\\debugadapter.ahk").fsPath]
 			);
 			logger.info(`factory ${JSON.stringify(executable)}`);
