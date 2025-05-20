@@ -475,7 +475,7 @@ ParsePort(Port) {
     Result := ""
 
     ; If Port is an integer
-    if (Port is Integer) {
+    if ((Port & -1) == Port) {
         if IsValidPort(Port) {
             Valid := True
             Result := [Port, Port]

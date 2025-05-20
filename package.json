@@ -112,7 +112,7 @@
 								"default": []
 							},
 							"port": {
-								"type": "number",
+								"type": ["number", "string"],
 								"description": "%ahk.debuggers.port.description%",
 								"default": 9005
 							}

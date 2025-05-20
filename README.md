@@ -64,7 +64,7 @@ An early version which needs test. Use it at you own risk.
 
 ### How to run this in debug mode
 
-Install the 1.1.37.01 version autohotkey which is the development verion and make sure installed path is `C:\Program Files\AutoHotkey\v1.1.37.01\AutoHotkeyU64.exe`. This is hard coded in `extension.ts` and used to run uncompiled version adapter.
+Copy an Autohotkey interpreter(v1.37^) into `extension_path\bin\AutoHotkey.exe`. This is hard coded in `extension.ts` and used to run uncompiled version adapter.
 
 ### Build
 

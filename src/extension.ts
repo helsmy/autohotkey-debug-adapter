@@ -90,16 +90,17 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 		// use the executable specified in the package.json if it exists or determine it based on some other information (e.g. the session)
 		if (!executable) {
 			logger.warn('No executable debugadapter set. Use default executable path');
-			const command = "./bin/debugadapter.exe";
+			const command = vscode.Uri.joinPath(this.extensionUri, "./bin/debugadapter.exe").fsPath;
 			// no option needed
 			// const options = {};
 			executable = new vscode.DebugAdapterExecutable(command);
 		}
 		// if under dev
 		if (this.mode !== vscode.ExtensionMode.Production) {
-			const runtime = join('C:', 'Program Files', 'AutoHotkey', 'v1.1.37.01', 'AutoHotkeyU64.exe');
+			const runtime = vscode.Uri.joinPath(this.extensionUri, ".\\bin\\AutoHotKey.exe").fsPath;
 			if (!existsSync(runtime))
-				throw Error(`Autohotkey runtime is not exist in '${runtime}'`);
+				// vscode.window.showErrorMessage(`Autohotkey runtime is not exist in '${runtime}'`);
+				throw Error(`Autohotkey runtime is not exist. Uncompiled debug adapter needs runtime in '${runtime}'.`);
 			
 			executable = new vscode.DebugAdapterExecutable(
 				runtime,

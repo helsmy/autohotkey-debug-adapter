@@ -24,7 +24,9 @@ suite('Node Debug Adapter', () => {
 	let dc: DebugClient;
 
 	setup( () => {
-		dc = new DebugClient(BIN_DEBUG_ADAPTER, '', 'ahkdbg');
+		const isDevMode = process.argv[process.argv.length - 1];
+		dc = isDevMode == '--dev'? new DebugClient(RUNTIME, DEBUG_ADAPTER, 'ahkdbg') : 
+							new DebugClient(BIN_DEBUG_ADAPTER, '', 'ahkdbg');
 		return dc.start();
 	});
 
