@@ -1,5 +1,9 @@
 ## Release Notes
 
+### 0.7.6
+1. support port range
+2. fix variable folding
+
 ### 0.7.3
 
 1. support passing command line arguments to script.
