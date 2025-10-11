@@ -18,18 +18,22 @@ SetWorkingDir %A_ScriptDir%
 
 #Include %A_ScriptDir%
 #Include ./AHKDebug.ahk
+#Include <logger>
 #Include <JSON>
 
 isdebug := false
 
 descript  := "AutoHotkey Debug Adapter`nDebug Adapter for AutoHotKey implemented by AutoHotKey."
 helpUsage := "For more infomation see: https://github.com/helsmy/autohotkey-debug-adaptor"
+log_level := LogLevel.Error
 if (A_Args.Length() >= 1) {
     arg1 := A_Args.RemoveAt(1)
     FileAppend %arg1%, **
     if (arg1 == "--help" || arg1 == "-h") 
         FileAppend %descript%`n`n%helpUsage%`n`n, *
-    if (arg1 != "")
+    else if (arg1 == "--loglevelinfo")
+        log_level := LogLevel.Info
+    else if (arg1 != "")
         ExitApp 0
 }
 ; global hEdit := CreateGui()

@@ -38,7 +38,7 @@ class Logger
 }
 
 class LogLevel {
-    static info := 1
+    static Info := 1
     static Error := 4
 }
 ;Edit_Append(hEdit, Txt) { ; Modified version by SKAN

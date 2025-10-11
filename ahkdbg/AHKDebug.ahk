@@ -18,7 +18,7 @@ class DebugSession extends Application
         this.isStart := false
         this._variableHandles := new Handles()
         this._runtime := new AHKRunTime()
-        this.metaVariableNames := ["class variables", "function variables"]
+        this.metaVariableNames := {"class variables": "", "function variables": ""}
     }
 
     CheckTimeOut()
@@ -302,12 +302,12 @@ class DebugSession extends Application
         ; EventDispatcher.EmitImmediately("send", CreateOutputEvent("stdout", "varref fullname: " id.fullName " frameId: " id.frameId))
         if (isGlobalScope) {
             additionalInfo := {}
-            for _, metaName in this.metaVariableNames {
+            for metaName, _ in this.metaVariableNames {
                 additionalInfo[metaName] := []
             }
         }
         ; Return variable list
-        variablesRaw := id.isMeta && IsInArray(this.metaVariableNames, id.fullName) ; if reference is a variables folding
+        variablesRaw := id.isMeta && this.metaVariableNames.HasKey(id.fullName) ; if reference is a variables folding
                         ? id.addtional
                         : this._runtime.CheckVariableReference(id)
         for _, var in variablesRaw 
@@ -345,7 +345,7 @@ class DebugSession extends Application
         }
         ; Global variables folding
         if (isGlobalScope) {
-            for _, metaName in this.metaVariableNames {
+            for metaName, _ in this.metaVariableNames {
                 varRef := new VarRefInfo(metaName, "None", true)
                 ; cache Global class infomation
                 varRef.addtional := additionalInfo[metaName]

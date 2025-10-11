@@ -104,7 +104,10 @@ class DebugAdapterExecutableFactory implements vscode.DebugAdapterDescriptorFact
 			
 			executable = new vscode.DebugAdapterExecutable(
 				runtime,
-				[vscode.Uri.joinPath(this.extensionUri, ".\\ahkdbg\\debugadapter.ahk").fsPath]
+				[
+					vscode.Uri.joinPath(this.extensionUri, ".\\ahkdbg\\debugadapter.ahk").fsPath,
+					'--loglevelinfo'
+				]
 			);
 			logger.info(`factory ${JSON.stringify(executable)}`);
 		}
