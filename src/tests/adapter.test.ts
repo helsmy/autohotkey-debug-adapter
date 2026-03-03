@@ -101,13 +101,33 @@ suite('Node Debug Adapter', () => {
 		test('should stop on a breakpoint', async () => {
 			try {
 				const res = await dc.hitBreakpoint(
-					{ ...LAUNCH_OPTION, program: PROGRAM}, 
+					{ ...LAUNCH_OPTION, program: PROGRAM},
 					{ path: PROGRAM, line: BREAKPOINT_LINE },
 					{line: BREAKPOINT_LINE}
 				);
 			} catch (err) {
 				return err;
 			}
+		});
+
+		test('breakpoint response should have valid source structure', async () => {
+			// Arrange
+			await dc.configurationSequence();
+			await dc.launch({ ...LAUNCH_OPTION, program: PROGRAM });
+
+			// Act
+			const response = await dc.setBreakpointsRequest({
+				source: { path: PROGRAM },
+				breakpoints: [{ line: BREAKPOINT_LINE }]
+			});
+
+			// Assert
+			const breakpoint = response.body.breakpoints[0];
+			assert.ok(breakpoint.source, 'breakpoint should have source');
+			assert.strictEqual(typeof breakpoint.source.path, 'string', 'source.path should be a string, not an object');
+			assert.strictEqual(breakpoint.source.path, PROGRAM, 'source.path should match program path');
+			assert.ok(breakpoint.source.name, 'source should have name');
+			assert.strictEqual(typeof breakpoint.source.sourceReference, 'number', 'sourceReference should be a number');
 		});
 	});
 
