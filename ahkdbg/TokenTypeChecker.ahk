@@ -10,10 +10,10 @@ TokenType(token) {
     ;     extends, static,
     ;     byref}
     start := SubStr(token, 1, 1)
-    if (start == """") 
+    if (start == """")
         return "string"
     if token is Integer
-        return "nteger"
+        return "integer"
     if token is Float
         return "float"
     if keyword.HasKey(token)
