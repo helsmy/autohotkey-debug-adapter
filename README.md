@@ -10,6 +10,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * Change varibles in debugging
 * Debug ahkv2 or H version since debug protocol do not change.(by set AhkExecutable path to corresponding runtime path in launch.json)
 * Support port range. Adepter will choose the smallest available port in the range (Thanks to @mahmoudimus)
+* Prompt for program arguments before each debug launch (see `args` below).
 
 ## Experimental Feature
 
@@ -53,7 +54,7 @@ Simple debug adapter for AutoHotKey implemented by AutoHotKey.
 * `captureStreams`: capture io streams or not.
 * `AhkExecutable`: change Default Execute Path. If left blank(use "" as value), the value of the item is automatically filled by the language support extension (by default is automaticlly acquired through registry, usually is  `C:\Program Files\Autohotkey\AutoHotkey.exe`).
 * `port`: The port on which to listen for XDebug (default: 9005) can be an interger or range (example: "9000-9005").
-* `args`: Command line arguments passed to the program.
+* `args`: Command line arguments passed to the program. Can be an array of strings, or `"${command:autohotkey-debug.pickArgs}"` to show an input box before each debug launch. The input is split on spaces; arguments containing spaces can be quoted.
 
 ## Known Issues
 

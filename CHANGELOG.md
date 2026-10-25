@@ -1,5 +1,9 @@
 ## Release Notes
 
+### 0.7.10
+1. support `${command:autohotkey-debug.pickArgs}` in `args` to prompt for program arguments before each debug launch (a new configuration snippet is provided).
+2. localize extension UI (English/Chinese).
+
 ### 0.7.6
 1. support port range
 2. fix variable folding

@@ -17,3 +17,5 @@ images
 bin/**
 !bin/debugAdapter.exe
 !l10n/**
+docs
+agents
