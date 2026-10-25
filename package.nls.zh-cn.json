@@ -4,7 +4,11 @@
     "ahk.debuggers.captureStreams.description": "可选参数。如果为 true，则调试程序的标准输出标准错误流会被捕捉。",
     "ahk.debuggers.AhkExecutable.description": "可选参数。Autohotkey解释器可执行文件的完整路径。兼容性选项，扩展在runtime为空时使用",
     "ahk.debuggers.runtime.description": "可选参数。Autohotkey解释器可执行文件的完整路径。扩展会优先使用此项作为解释器的路径",
-    "ahk.debuggers.args.description": "可选参数。传递给程序的命令行参数。\n\n为字符串数组，传递的参数不会进行转义",
+    "ahk.debuggers.args.description": "可选参数。传递给程序的命令行参数。\n\n为字符串数组，传递的参数不会进行转义。也可设为 \"${command:autohotkey-debug.pickArgs}\" 在启动调试前弹出输入框",
     "ahk.debuggers.port.description": "必要参数。调试协议监听的端口",
-    "ahk.debuggers.configurationSnippets.description": "新的AutoHotKey调试参数"
+    "ahk.debuggers.configurationSnippets.description": "新的AutoHotkey调试参数",
+    "ahk.debuggers.configurationSnippets.pickArgs.description": "启动调试前弹出程序参数输入框",
+    "ahk.debuggers.configurationSnippets.label.launch": "AutoHotKey调试: Launch",
+    "ahk.debuggers.configurationSnippets.label.launchargs": "AutoHotKey调试: 带参数Launch",
+    "ahk.commands.pickArgs.title": "AutoHotkey Debug: 输入程序参数"
 }

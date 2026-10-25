@@ -16,3 +16,4 @@ testdata
 images
 bin/**
 !bin/debugAdapter.exe
+!l10n/**

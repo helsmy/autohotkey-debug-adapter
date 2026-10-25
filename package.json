@@ -34,6 +34,12 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"commands": [
+			{
+				"command": "autohotkey-debug.pickArgs",
+				"title": "%ahk.commands.pickArgs.title%"
+			}
+		],
 		"languages": [
             {
                 "id": "ahk",
@@ -104,7 +110,7 @@
 								"default": "C:\\Program Files\\AutoHotkey\\AutoHotkey.exe"
 							},
 							"args": {
-								"type": "array",
+								"type": ["array", "string"],
 								"items": {
 									"type": "string"
 								},
@@ -171,7 +177,7 @@
 				],
 				"configurationSnippets": [
 					{
-						"label": "AutoHotKey Debug: Launch",
+						"label": "%ahk.debuggers.configurationSnippets.label.launch%",
 						"description": "%ahk.debuggers.configurationSnippets.description%",
 						"body": {
 							"type": "ahkdbg",
@@ -181,6 +187,21 @@
 							"stopOnEntry": true,
 							"captureStreams": true,
 							"runtime": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
+							"port": 9005
+						}
+					},
+					{
+						"label": "%ahk.debuggers.configurationSnippets.label.launchargs%",
+						"description": "%ahk.debuggers.configurationSnippets.pickArgs.description%",
+						"body": {
+							"type": "ahkdbg",
+							"request": "launch",
+							"name": "A new configuration for 'debugging' AutoHotKey.",
+							"program": "${file}",
+							"stopOnEntry": true,
+							"captureStreams": true,
+							"runtime": "C:\\\\Program Files\\\\AutoHotkey\\\\AutoHotkey.exe",
+							"args": "^\"\\${command:autohotkey-debug.pickArgs}\"",
 							"port": 9005
 						}
 					}
