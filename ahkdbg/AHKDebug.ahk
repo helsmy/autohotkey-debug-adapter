@@ -31,11 +31,13 @@ class DebugSession extends Application
     {
         ; body
         response["body"] := {}
-        response.body["supportsConfigurationDoneRequest"] := JSON.true
-        response.body["supportsSetVariable"] := JSON.true
-        response.body["supportsClipboardContext"] := JSON.true
+        response.body["supportsConfigurationDoneRequest"] := JSON.True
+        response.body["supportsSetVariable"] := JSON.True
+        response.body["supportsClipboardContext"] := JSON.True
+        response.body["supportsVariableType"] := JSON.True
+        response.body["supportsVariablePaging"] := JSON.True
         ; experimental features
-        response.body["supportsHitConditionalBreakpoints"] := JSON.true
+        response.body["supportsHitConditionalBreakpoints"] := JSON.True
         ExceptionBreakpointsFilter := {"filter": "AHKExceptionBreakpoint"
                                     , "label": "Exceptions"
                                     , "description": "Breaks on all throw errors, even if they're caught later."
@@ -44,9 +46,9 @@ class DebugSession extends Application
         ; let client know DA support exception breakpoint
         response.body["exceptionBreakpointFilters"] := [ExceptionBreakpointsFilter]
         ; response.body["supportsExceptionInfoRequest"] := JSON.True
-        response.body["supportsEvaluateForHovers"] := JSON.true
-        ; response.body["supportsFunctionBreakpoints"] := JSON.true
-        ; response.body["supportsBreakpointLocationsRequest"] := JSON.true
+        response.body["supportsEvaluateForHovers"] := JSON.True
+        ; response.body["supportsFunctionBreakpoints"] := JSON.True
+        ; response.body["supportsBreakpointLocationsRequest"] := JSON.True
 
         InitializedEvent := {"type": "event", "event": "initialized"}
         switch env.arguments.pathFormat
@@ -91,7 +93,7 @@ class DebugSession extends Application
                 response["body"] := {"error": CreateMessage(-1, "Invalid runtime is passed by language server. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
-            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.true) ? true : false
+            this._runtime.dbgCaptureStreams := (env.arguments.captureStreams == JSON.True) ? true : false
             runtime := env.arguments.runtime == "" ? env.arguments.AhkExecutable : env.arguments.runtime
             this._runtime.AhkExecutable := FileExist(runtime) ? runtime : this._runtime.AhkExecutable
             result := ParsePort(env.arguments.port)
@@ -102,7 +104,7 @@ class DebugSession extends Application
                 response["body"] := {"error": CreateMessage(-1, result[2] "`nReceived: '"  env.arguments.port "'. Please check interpreter settings")}
                 return this.errorResponse(response, env)
             }
-            noDebug := (env.arguments.noDebug == JSON.true) ? true : false
+            noDebug := (env.arguments.noDebug == JSON.True) ? true : false
             DALogger.Init()
             try
             {
@@ -144,7 +146,7 @@ class DebugSession extends Application
         }
 
 
-        stopOnEntry := (env.arguments.stopOnEntry == JSON.true) ? true : false
+        stopOnEntry := (env.arguments.stopOnEntry == JSON.True) ? true : false
         this._runtime.StartRun(stopOnEntry)
 
         return [response]
@@ -282,8 +284,17 @@ class DebugSession extends Application
         response["body"] := {}
         ; Since ahk always keeps two scopes(Local, Global), just return them
         response.body["scopes"] := [{"name": "Local", "variablesReference": this._variableHandles.create(new VarRefInfo("Local", frameId, true)), "expensive": JSON.false}
-                                  , {"name": "Global", "variablesReference": this._variableHandles.create(new VarRefInfo("Global", "None", true)), "expensive": JSON.true}]
+                                  , {"name": "Global", "variablesReference": this._variableHandles.create(new VarRefInfo("Global", "None", true)), "expensive": JSON.True}]
         return [response]
+    }
+
+    ; Create a handle for an array folding node; the ArrayMetaInfo travels
+    ; in VarRefInfo.addtional so VarRefInfo itself stays unchanged.
+    _createArrayMetaRef(meta, frameId)
+    {
+        varRef := new VarRefInfo(meta.baseFullName, frameId, true)
+        varRef.addtional := meta
+        return this._variableHandles.create(varRef)
     }
 
     ; TODO: May long running, need async exec here
@@ -332,16 +343,23 @@ class DebugSession extends Application
                     additionalInfo["function variables"].Push(var)
                 continue
             }
-            variables.Push({"name": var.name
-                            ,"type": var.type
-                            ,"value": var.value
-                            ,"variablesReference"
-                            : var.type == "object" 
-                        ;    store fullname for inspecting
-                            ? this._variableHandles.create(new VarRefInfo(var.fullName, id.frameId))+0 : 0})
-                            ; ,"presentationHint": variablesRaw.facet == "Builtin" ? {"attributes": ["constant", "readOnly"]}})
+            vrf := 0
+            if var.type == "object"
+                vrf := this._variableHandles.create(new VarRefInfo(var.fullName, id.frameId))+0
+            else if var.type == "meta"
+                vrf := this._createArrayMetaRef(var.meta, id.frameId)+0
+            else
+                vrf := 0
+            v := {"name": var.name
+                ,"type": var.type
+                ,"value": var.value
+                ,"variablesReference": vrf+0}
+            if var.type == "meta"
+                v["presentationHint"] := {"kind": "virtual"}
+            v["namedVariables"] := 400
             if var.facet == "Builtin"
-                var["presentationHint"] := {"attributes": ["constant", "readOnly"]}
+                v["presentationHint"] := {"attributes": ["constant", "readOnly"]}
+            variables.Push(v)
         }
         ; Global variables folding
         if (isGlobalScope) {

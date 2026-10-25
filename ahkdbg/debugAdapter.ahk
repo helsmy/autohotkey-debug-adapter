@@ -40,6 +40,7 @@ if (A_Args.Length() >= 1) {
 ; Let cJson return boolen in Json way
 JSON.BoolsAsInts := false
 global DALogger := new Logger()
+; DALogger.logLevel := LogLevel.Info
 IOStream := new StdIO()
 SERVER_ADDRESS := [IOStream, IOStream]
 module := new DebugSession()

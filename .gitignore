@@ -13,6 +13,11 @@ ahkdbg/test
 
 #log
 ahkdbg.log
+*.log
+docs/**
 
 #bin
 bin
+
+#AI
+.agents/

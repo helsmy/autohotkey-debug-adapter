@@ -1,4 +1,5 @@
-﻿#Include ./protocolserver.ahk
+﻿#Include ./ArrayPaging.ahk
+#Include ./protocolserver.ahk
 #Include ./AHKBKManger.ahk
 #Include <DBGp>
 #Include <event>
@@ -37,7 +38,8 @@ class AHKRunTime
 		this.dbgCaptureStreams := false
 		this.Dbg_Session := ""
 		this.BkManger := new BreakPointManger()
-		this.dbgMaxChildren := 99+0
+		this.dbgMaxChildren := 100+0
+		this._foldArrayVars := true
 		this.currline := 0
 		this.isStart := false
 		this.stoppedReason := "breakpoint"
@@ -557,6 +559,8 @@ class AHKRunTime
 			id := "-c " this.globalContextId
 		else if (varRef.isMeta && varRef.fullName == "Local")
 			id := "-d " . varRef.frameId . " -c 0"
+		else if (IsObject(varRef.addtional) && ObjGetBase(varRef.addtional) == ArrayMetaInfo)
+			return this.GetArrayMetaInfo(varRef.addtional)
 		else
 			return this.InspectVariable(id, varRef.frameId)
 		; TODO: may need to send error
@@ -577,53 +581,127 @@ class AHKRunTime
 
 	GetObjectInfoFromDom(ByRef objdom, frameId)
 	{
-		root := objdom.selectSingleNode("/response/property/@name").text
+		root := objdom.selectSingleNode("/response/property")
 		; DALogger.info(A_ThisFunc ": " root)
 		; this.sendEvent(CreateOutputEvent("stdout", root))
 		propertyNodes := objdom.selectNodes("/response/property[1]/property")
-		
+
+		; fold long arrays into meta variables such as [1-99]
+		if (this._foldArrayVars && root.getAttribute("classname") == "Array")
+		{
+			pageInfo := ArrPaging_ParsePage0(objdom)
+			if (pageInfo.foldable)
+			{
+				rootFullName := objdom.selectSingleNode("/response/property/@fullname").text
+				; the number of items in page 0 decides the offset of later pages
+				itemsInPage0 := pageInfo.itemsInPage0
+				; page 0 items are (base + n0); later pages carry pageSize items
+				pageSize := pageInfo.itemsInPage0 + 1
+				metas := ArrPaging_RootMetas(pageInfo.arrayLength, itemsInPage0, pageSize, rootFullName, frameId)
+				variables := []
+				; Find the only one `<base>` property of array
+				Loop % propertyNodes.length
+				{
+					if (propertyNodes.item[A_Index-1].attributes.getNamedItem("name").text == "<base>") 
+					{
+						variables.Push(this._ParsePropertyNode(propertyNodes.item[A_Index-1], A_Index))
+						break
+					}
+				}
+				for _, meta in metas 
+				{
+					vname := ArrPaging_MetaName(meta.itemStart, meta.itemEnd)
+					v := new VarInfo(vname, vname, "", "meta", "")
+					v.meta := meta
+					variables.Push(v)
+				}
+				return variables
+			}
+		}
+
 		variables := []
 		
 		Loop % propertyNodes.length
 		{
-			node := propertyNodes.item[A_Index-1]
-			nodeName := node.attributes.getNamedItem("name").text
-			needToLoadChildren := node.attributes.getNamedItem("children").text
-			; Fuck! bug due to ahk itself
-			nodeFullName := node.attributes.getNamedItem("fullname").text
-			fixedFullName := ""
-			for _, objKey in StrSplit(nodeFullName, ".")
-			{
-				if objKey is number
-				{
-					objKey := "[""" objKey """]"
-					fixedFullName .= objKey
-				}
-				else
-					fixedFullName .= "." objKey
-			}
-			nodeFullName := SubStr(fixedFullName, 2) 
-			; this.sendEvent(CreateOutputEvent("stdout", nodeFullName))
-			nodeType := node.attributes.getNamedItem("type").text
-			if (nodeType == "object")
-			{
-				; we are checking the A_Index item of second layer of property
-				; respone
-				;    └---property <-- layer 1
-				;           └---property
-				;           └---property <-- object item(need to unpack)
-				;                  └---property <-- we needed
-				nodeValue := Util_UnpackObjValue(node, A_Index, 2)
-			}
-			else
-				nodeValue := DBGp_Base64UTF8Decode(node.text)
-			; nodeValue := (nodeType == "object") ? "(Object)" : DBGp_Base64UTF8Decode(node.text)
-			variables.Push({  "name": nodeName
-							, "type": nodeType
-							, "value": nodeValue
-							, "fullName": nodeFullName})
+			p := this._ParsePropertyNode(propertyNodes.item[A_Index-1], A_Index)
+			variables.Push(p)
 		}
 
+		return variables
+	}
+
+	; Parse one DBGp <property> node into {name, fullName, type, value}.
+	; fullName numeric keys are re-quoted as ["n"]; index is the 1-based
+	; position of the node among its siblings (needed by Util_UnpackObjValue).
+	_ParsePropertyNode(node, index)
+	{
+		nodeName := node.attributes.getNamedItem("name").text
+		nodeFullName := node.attributes.getNamedItem("fullname").text
+		fixedFullName := ""
+		for _, objKey in StrSplit(nodeFullName, ".")
+		{
+			if objKey is number
+			{
+				objKey := "[""" objKey """]"
+				fixedFullName .= objKey
+			}
+			else
+				fixedFullName .= "." objKey
+		}
+		nodeFullName := SubStr(fixedFullName, 2)
+		nodeType := node.attributes.getNamedItem("type").text
+		if (nodeType == "object")
+		{
+			; we are checking the A_Index item of second layer of property
+			; respone
+			;    └---property <-- layer 1
+			;           └---property
+			;           └---property <-- object item(need to unpack)
+			;                  └---property <-- we needed
+			nodeValue := Util_UnpackObjValue(node, index, 2)
+		}
+		else
+			nodeValue := DBGp_Base64UTF8Decode(node.text)
+		return new VarInfo(nodeName, nodeFullName, nodeValue, nodeType)
+	}
+
+	; Children of an array folding node: group metas are computed locally,
+	; page metas are fetched from the debugee via property_get -p page.
+	GetArrayMetaInfo(meta)
+	{
+		if (!meta.IsPage())
+			return this._UnpackArrayPageMetas(ArrPaging_ChildMetas(meta))
+		; fetch the requested page of the array from the debugee
+		if (this.enableChildren == false)
+			this.SetEnableChildren(true)
+		if (meta.frameId != "None")
+			this.Dbg_Session.property_get("-n " . meta.baseFullName . " -d " . meta.frameId . " -p " . meta.pageStart, Dbg_Response)
+		else
+			this.Dbg_Session.property_get("-c " . this.globalContextId . " -n " . meta.baseFullName . " -p " . meta.pageStart, Dbg_Response)
+		DALogger.info("from Debugee: " Dbg_Response)
+		dom := loadXML(Dbg_Response)
+		propertyNodes := dom.selectNodes("/response/property[1]/property")
+		variables := []
+		Loop % propertyNodes.length
+		{
+			; <base> was already shown at the outer level when folding
+			if (propertyNodes.item[A_Index-1].attributes.getNamedItem("name").text == "<base>")
+				continue
+			p := this._ParsePropertyNode(propertyNodes.item[A_Index-1], A_Index)
+			variables.Push(p)
+		}
+		return variables
+	}
+
+	_UnpackArrayPageMetas(metas)
+	{
+		variables := []
+		for _, meta in metas {
+			n := ArrPaging_MetaName(meta.itemStart, meta.itemEnd)
+			v := new VarInfo(n, n, "", "meta")
+			v.meta := meta
+			variables.Push(v)
+		}
 		return variables
 	}
 
@@ -784,8 +862,8 @@ class AHKRunTime
 				value := DBGp_Base64UTF8Decode(node.text)
 			else 
 				value := Util_UnpackObjValue(frameNode.selectSingleNode("/response/property[" A_Index "]"), A_Index)
-
-			o.Push({name: name, fullName: fullName, type: type, facet: facet, value: value})
+			v := new VarInfo(name, fullName, value, type, facet)
+			o.Push(v)
 		}
 		; this.SendEvent(CreateOutputEvent("stdout", JSON.dump(o)))
 		return o
@@ -1002,5 +1080,6 @@ class VarInfo {
 		this.value := value
 		this.type := type
 		this.facet := facet
+		this.meta := ""
 	}
 }

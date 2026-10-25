@@ -112,14 +112,22 @@ suite('Node Debug Adapter', () => {
 
 		test('breakpoint response should have valid source structure', async () => {
 			// Arrange
-			await dc.configurationSequence();
-			await dc.launch({ ...LAUNCH_OPTION, program: PROGRAM });
+			// 'initialized' is only emitted after launch sends 'initialize',
+			// and the launch response is deferred until 'configurationDone',
+			// so launch must run concurrently with the configuration sequence.
+			// Breakpoints must be set BEFORE configurationDone: once the debuggee
+			// is resumed it may exit and breakpoint_set then fails (verified:false).
+			const initializedPromise = dc.waitForEvent('initialized');
+			const launchPromise = dc.launch({ ...LAUNCH_OPTION, program: PROGRAM });
+			await initializedPromise;
 
 			// Act
 			const response = await dc.setBreakpointsRequest({
 				source: { path: PROGRAM },
 				breakpoints: [{ line: BREAKPOINT_LINE }]
 			});
+			await dc.configurationDoneRequest();
+			await launchPromise;
 
 			// Assert
 			const breakpoint = response.body.breakpoints[0];
@@ -143,6 +151,81 @@ suite('Node Debug Adapter', () => {
 				dc.assertOutput('stdout', "Hello stdout 0\nHello stdout 1\nHello stdout 2\n"),
 				dc.assertOutput('stderr', "Hello stderr 0\nHello stderr 1\nHello stderr 2\n")
 			]);
+		});
+	});
+
+	suite('array folding', () => {
+
+		const V2_AHK = 'C:/Program Files/AutoHotkey/v2/AutoHotkey64.exe';
+
+		async function variablesOf(dc: DebugClient, ref: number): Promise<DebugProtocol.Variable[]> {
+			const res = await dc.variablesRequest({ variablesReference: ref });
+			return res.body.variables;
+		}
+
+		async function stopAt(dc: DebugClient, program: string, line: number): Promise<DebugProtocol.StackFrame[]> {
+			return await dc.hitBreakpoint({ ...LAUNCH_OPTION, AhkExecutable: V2_AHK, program }, { path: program, line });
+		}
+
+		function findVar(vars: DebugProtocol.Variable[], name: string): DebugProtocol.Variable {
+			const v = vars.find(v => v.name === name);
+			assert.ok(v, `variable '${name}' not found`);
+			return v;
+		}
+
+		test('short array should not be folded', async () => {
+			const PROGRAM = Path.join(DATA_ROOT, 'arrays/large_array_v2.ahk');
+			await stopAt(dc, PROGRAM, 4);
+			const stack = await dc.stackTraceRequest({ threadId: 1 });
+			const scopes = await dc.scopesRequest({ frameId: stack.body.stackFrames[0].id });
+			const localRef = scopes.body.scopes.find(s => s.name === 'Global')!.variablesReference;
+			const locals = await variablesOf(dc, localRef);
+			const arr = findVar(locals, 'arr');
+			assert.strictEqual(arr.variablesReference > 0, true, 'array should be expandable');
+			const items = await variablesOf(dc, arr.variablesReference);
+			assert.ok(items.some(v => v.name === '[1]'), 'item 1 should be listed directly');
+		});
+
+		test('long array should be folded into page metas', async () => {
+			const PROGRAM = Path.join(DATA_ROOT, 'arrays/huge_array_v2.ahk');
+			await stopAt(dc, PROGRAM, 4);
+			const stack = await dc.stackTraceRequest({ threadId: 1 });
+			const scopes = await dc.scopesRequest({ frameId: stack.body.stackFrames[0].id });
+			const localRef = scopes.body.scopes.find(s => s.name === 'Global')!.variablesReference;
+			const locals = await variablesOf(dc, localRef);
+			const arr = findVar(locals, 'bigArr');
+			assert.strictEqual(arr.variablesReference > 0, true, 'array should be expandable');
+
+			// v2 debugee with max_children=100: page 0 holds n0=99 items (+<base>), later pages 100 -> 16 pages
+			// <base> is an attribute of the array itself: shown first, outside the folding
+			const level1 = await variablesOf(dc, arr.variablesReference);
+			assert.deepStrictEqual(level1.map(v => v.name), ['<base>', '[1-999]', '[1000-1500]'], 'root folding groups');
+
+			// expand a 10-page group: first page 99 items, later pages 100
+			const group1 = findVar(level1, '[1-999]');
+			const level2 = await variablesOf(dc, group1.variablesReference);
+			assert.strictEqual(level2.length, 10, 'group should contain 10 pages');
+			assert.strictEqual(level2[0].name, '[1-99]');
+			assert.strictEqual(level2[9].name, '[900-999]');
+
+			// last group holds the remaining 6 pages (16 total)
+			const group2 = findVar(level1, '[1000-1500]');
+			const level2b = await variablesOf(dc, group2.variablesReference);
+			assert.strictEqual(level2b.length, 6);
+			assert.strictEqual(level2b[5].name, '[1500-1500]');
+
+			// expand page leaves: values must align with indices, across a page boundary
+			// <base> is only shown at the outer level, never inside a folded page
+			const page1 = findVar(level2, '[1-99]');
+			const page1Items = await variablesOf(dc, page1.variablesReference);
+			assert.strictEqual(page1Items.length, 99);
+			assert.strictEqual(page1Items[0].name, '[1]');
+			assert.strictEqual(page1Items[0].value, '"item1"');
+			const page2 = findVar(level2, '[100-199]');
+			const page2Items = await variablesOf(dc, page2.variablesReference);
+			assert.strictEqual(page2Items.length, 100);
+			assert.strictEqual(page2Items[0].name, '[100]');
+			assert.strictEqual(page2Items[0].value, '"item100"');
 		});
 	});
 });
